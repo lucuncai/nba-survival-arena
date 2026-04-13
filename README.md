@@ -84,11 +84,12 @@ Boss 掉率为普通的 5 倍。
 
 ### 代码结构
 ```
-index.html (单文件，~2.4MB)
+index.html (单文件，~3MB)
 ├── <script> Phaser.js 3.80.1 内嵌 (~1.2MB)
 ├── SPRITE_DATA — 14 张 AI 生成 sprite sheets (WebP base64)
-│   ├── 角色: lebron/kobe/curry × walk/idle/attack
-│   └── 敌人: fan/ref/rival/press × walk
+│   ├── 角色: lebron/kobe/curry × walk/idle/attack (9张)
+│   ├── 敌人: fan/ref/rival/press × walk (4张)
+│   └── Boss: boss_walk (1张)
 ├── ENEMY_TYPES — 敌人属性定义
 ├── BOSS_TYPE — Boss 属性定义
 ├── DROP_TYPES — 道具掉落定义
@@ -112,7 +113,7 @@ index.html (单文件，~2.4MB)
 ```
 
 ### 美术资产
-- 角色 & 敌人 sprite sheets 由 AI（Meta Imagine）生成
+- 角色 & 敌人 sprite sheets 由 AI 生成（v9.0 全面重制，统一 chibi 卡通风格）
 - 背景使用 rembg (U²-Net) 去除
 - WebP 压缩（quality 55）保持文件小
 - 帧尺寸运行时从图片实际宽度自动计算（`frameCount`），不 hardcode
@@ -127,6 +128,7 @@ index.html (单文件，~2.4MB)
 直接浏览器打开 `index.html` 即可，无需服务器。
 
 ## 📝 版本历史
+- **v9.0** — 全面重制 sprite 美术资产：AI 重新生成 14 张高质量 chibi 风格 sprite sheet（3 角色 × 3 动作 + 4 敌人 + 1 Boss），统一美术风格，Boss 拥有专属霸气形象（金黑球衣、火焰拳头、红色发光眼睛）
 - **v8.0** — Boss 波次系统、道具掉落、敌人 HP 条、增强角色选择 UI（技能详情+定位标签）、本地记录保存、难度曲线优化、3 角色各 5 技能完整
 - **v7.4** — LeBron 技能大改（The Block / And One / 空接 / 转身扣篮），新敌人 sprite，XP 平衡
 - **v7.3** — Phaser.js 重构，AI sprite sheets，音效系统

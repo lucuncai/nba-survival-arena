@@ -1,0 +1,13 @@
+# Build artifacts
+index_v2.html
+index_backup_*.html
+
+# Debug and test notes
+debug_*.txt
+debug_*.md
+test_*.txt
+
+# Legacy files (kept for reference but not tracked)
+game_code.js
+html_head.txt
+html_tail.txt

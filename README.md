@@ -1,139 +1,148 @@
-# 🏀 NBA Survival Arena
+# NBA Survival Arena — Hoop Defense
 
-NBA 主题 2D 生存动作游戏，灵感来自 Vampire Survivors + 王者荣耀操作风格。
+NBA 主题 2D 生存动作游戏，灵感来自 Vampire Survivors + 王者荣耀操作风格。**守护篮筐，拦截每一球。**
 
-## 🎮 在线试玩
-**[Play Now →](https://lucuncai.github.io/nba-survival-arena/)**
+## 在线试玩
 
-手机横屏体验最佳（iPhone / Android 均支持）
+**[Play Now](https://lucuncai.github.io/nba-survival-arena/)** — 手机横屏体验最佳（iPhone / Android 均支持）
 
-## 📖 游戏介绍
-选择 NBA 传奇球星，在篮球场上对抗四面八方涌来的反派球员。运用走位和技能存活下去！
+## 游戏介绍
 
-### 可选角色
-| 角色 | 定位 | HP | ATK | SPD | 攻击方式 |
-|------|------|----|-----|-----|----------|
-| 👑 LeBron James | 近战坦克 | 250 | 55 | 280 | 近战 |
-| 🐍 Kobe Bryant | 中距刺客 | 200 | 50 | 300 | 中距离 |
-| 🎯 Stephen Curry | 远程射手 | 160 | 40 | 340 | 远程 |
+选择 NBA 传奇球星，在篮球场上守护中央篮筐。敌人从四面八方涌来，接近篮筐后投篮得分。你需要：
 
-每个角色拥有 **5 个独特技能**：主技能、两个副技能、大招和闪避。
+- **击杀敌人** — 在他们投篮前消灭，赚取经验升级
+- **拦截投篮** — 用身体挡球或使用技能拦截飞行中的篮球
+- **存活** — 尽可能久地保护篮筐不被摧毁
+
+篮筐被摧毁或角色被击败时游戏结束。
+
+## 可选角色
+
+| 角色 | 定位 | HP | ATK | SPD | 玩法 |
+|------|------|----|-----|-----|------|
+| LeBron James | Paint Guardian | 350 | 55 | 210 | 近战坦克，力量与控制 |
+| Kobe Bryant | Perimeter Assassin | 280 | 60 | 230 | 高机动性，精准击杀 |
+| Stephen Curry | Zone Controller | 200 | 48 | 220 | 远程火力覆盖 |
+
+每个角色拥有 **3 个主动技能** (Q1/Q2/Q3) 和 **1 个大招** (R)。
 
 ### LeBron James 技能
-- **Block** — 巨掌拍击前方，秒杀小怪
-- **And 1** — 冲锋推人，击退+回血
-- **空接** — 弧线跳跃扣篮，落地 AOE
-- **扣篮** — 旋转扣篮大招，全屏减速
-- **闪避** — 快速闪避，路径伤害
+- **The Block** — 扇形拍击，摧毁范围内所有飞行中的篮球
+- **And One** — 无敌冲锋，击退路径上所有敌人
+- **Earthquake** — AOE 震地，眩晕附近敌人 2 秒
+- **King's Domain** — 力场：敌人减速 50%，持续 8 秒
 
 ### Kobe Bryant 技能
-- **后仰** — 后跳射出 3 发弹幕
-- **突破** — 快速突进，路径伤害+击退
-- **假动作** — 残影嘲讽，自身隐身 1.5 秒
-- **曼巴** — 攻击力 x2.5，移速 x1.4，持续 6 秒
-- **转身** — 快速闪避，路径伤害
+- **Fadeaway** — 后撤步 + 3 发穿透射击
+- **Viper Strike** — 穿刺突进，高伤害 + 流血效果
+- **Lockdown** — 恐慌 3 个最近敌人，停止射击 3 秒
+- **Mamba Mode** — 攻击力 +200%，移速 +50%，持续 10 秒
 
 ### Stephen Curry 技能
-- **炸球** — 投掷爆炸篮球，范围伤害
-- **交叉步** — 后撤步+扇形三分弹幕
-- **掩护** — 召唤队友幻影挡弹+减速
-- **全屏** — Logo Shot 远距离光束
-- **运球** — 快速闪避，路径伤害
+- **Splash Bomb** — 爆炸篮球，AOE 伤害 + 摧毁敌方篮球
+- **Crossover** — 360 度弹幕环，击退敌人
+- **Pick & Roll** — 召唤幻影墙壁，阻挡敌人和篮球 5 秒
+- **Night Night** — 子弹时间：敌人和篮球减速至 20%，持续 6 秒
 
-### 敌人类型
-| 敌人 | HP | ATK | 速度 | 特殊 |
-|------|----|-----|------|------|
-| 🏀 恶棍球员 | 40 | 8 | 100 | 基础近战 |
-| 💪 脏球手 | 60 | 6 | 120 | 撞人定身 |
-| ⭐ 全明星对手 | 140 | 18 | 70 | 血厚精英 |
-| 🎯 远程射手 | 45 | 10 | 90 | 远距离弹幕 |
-| 👑 **超级全明星 (Boss)** | 800+ | 30+ | 55 | AOE 震地，必掉道具 |
+## 敌人类型
 
-### 核心系统
-
-**Boss 波次系统** — 每 60 秒刷新一个强力 Boss，带专属 HP 条、警告动画和屏幕震动。Boss 每波难度递增。
-
-**道具掉落系统** — 击杀敌人有概率掉落道具：
-
-| 道具 | 效果 | 掉率 |
+| 敌人 | 行为 | 威胁 |
 |------|------|------|
-| 🍔 佳得乐 | 回复 25% 最大 HP | 6% |
-| ⚡ 闪电鞋 | 移速 x1.5 持续 10 秒 | 4% |
-| 💣 炸弹篮球 | 范围爆炸（8 倍攻击力） | 2.5% |
-| 🧲 磁铁 | 瞬间吸收所有经验球 | 4% |
+| Rookie | 近距离快速投篮，低伤害 | 低 |
+| Mid-Range Vet | 中距离，中等命中率 | 中 |
+| Sharpshooter | 远距离狙击，高单发伤害 | 高 |
+| Power Center | 高血量，近距离，投篮不可打断 | 高 |
+| All-Star MVP (Boss) | 超高血量，高伤害，周期性刷新 | 极高 |
 
-Boss 掉率为普通的 5 倍。
+## 操作
 
-**升级系统** — 每次升级从 9 种强化中随机 3 选 1：攻击力、攻速、移速、最大 HP、暴击率、暴击伤害、吸血、技能 CD、攻击范围。
+| 输入 | 动作 |
+|------|------|
+| WASD / 方向键 | 移动 |
+| J | 技能 1 |
+| K | 技能 2 |
+| L | 技能 3 |
+| Space | 大招 |
+| 左半屏触控摇杆 | 移动（手机） |
+| 右侧技能按钮 | 技能（手机） |
 
-**本地记录** — 最佳存活时间、击杀数、连击数、等级保存到 localStorage，在菜单和 Game Over 界面展示。
+## 核心系统
 
-### 操作
-- **左手摇杆** — 移动（触控）
-- **键盘** — WASD / 方向键移动
-- **右侧按钮** — 技能释放
-- **自动攻击** — 范围内最近敌人
+**敌人 AI 状态机** — 接近 → 蓄力 → 投篮 → 冷却 → 循环。蓄力阶段可被击退打断（Power Center 除外）。
 
-## 🏗️ 技术架构
+**Boss 波次** — 每 60 秒刷新一个强力 Boss，带专属警告动画和屏幕震动。每波难度递增。
 
-### 引擎 & 框架
+**道具掉落** — 击杀敌人有概率掉落：佳得乐（回血 25%）、闪电鞋（加速 10s）、炸弹篮球（范围爆炸）、修复包（篮筐回血）。Boss 掉率 5 倍。
+
+**升级系统** — 每次升级从 14 种强化中随机 3 选 1，包括战斗属性和篮筐防御两大类。
+
+**本地记录** — 最佳存活时间、击杀数、拦截数、等级保存到 localStorage。
+
+## 项目结构
+
+```
+nba-survival-arena/
+├── index.html              # 打包后的单文件游戏（自动生成）
+├── html_head_v2.txt        # HTML/CSS 模板
+├── assemble.py             # 构建脚本 — 拼接 src/ 到 index.html
+├── src/
+│   ├── config.js           # 全局常量（视口、世界、篮筐）
+│   ├── sfx.js              # Web Audio API 音效系统
+│   ├── records.js          # localStorage 记录持久化
+│   ├── enemies.js          # 敌人类型定义
+│   ├── characters.js       # 可玩角色定义
+│   ├── upgrades.js         # 升级词条池
+│   ├── drops.js            # 掉落物品定义
+│   ├── sprites.js          # Sprite 尺寸预计算
+│   └── scenes/
+│       ├── BootScene.js        # 资源加载和动画注册
+│       ├── MenuScene.js        # 角色选择菜单
+│       ├── GameScene.js        # 主游戏场景（生命周期、HUD、输入）
+│       ├── GameScene_Combat.js     # 自动攻击、伤害、弹道
+│       ├── GameScene_EnemyAI.js    # 敌人状态机、投篮、得分
+│       ├── GameScene_Spawning.js   # 波次生成、Boss 生成
+│       ├── GameScene_Skills.js     # 角色技能实现（12 个技能）
+│       └── GameScene_Upgrade.js    # 升级弹窗
+│   └── main.js             # Phaser 配置和启动
+```
+
+## 构建
+
+游戏以单个 `index.html` 文件分发，内嵌 Phaser 3、sprite 数据和所有游戏逻辑。编辑源文件后重新构建：
+
+```bash
+python3 assemble.py
+cp index_v2.html index.html
+```
+
+## 技术架构
+
 - **Phaser.js 3.80.1** — WebGL 2D 游戏引擎（内嵌，零 CDN 依赖）
-- **单文件 HTML** — 所有代码、资产、引擎打包在一个 `index.html`
 - **Web Audio API** — 程序化音效生成，无外部音频文件
+- **Mixin 模式** — `GameScene` 通过 `Object.assign` 拆分为 6 个职责模块
+- **Base64 Sprites** — 14 张 AI 生成 chibi 风格 sprite sheets（WebP 压缩）
 - **localStorage** — 本地最佳记录持久化
+- **GitHub Pages** — 静态文件托管，零服务端依赖
 
-### 代码结构
-```
-index.html (单文件，~3MB)
-├── <script> Phaser.js 3.80.1 内嵌 (~1.2MB)
-├── SPRITE_DATA — 14 张 AI 生成 sprite sheets (WebP base64)
-│   ├── 角色: lebron/kobe/curry × walk/idle/attack (9张)
-│   ├── 敌人: fan/ref/rival/press × walk (4张)
-│   └── Boss: boss_walk (1张)
-├── ENEMY_TYPES — 敌人属性定义
-├── BOSS_TYPE — Boss 属性定义
-├── DROP_TYPES — 道具掉落定义
-├── Records — 本地记录管理
-├── CHARACTER_DEFS — 角色属性 & 5 技能定义
-├── SFX — Web Audio 音效系统
-├── preCalculateSpriteDimensions() — 运行时自动计算帧尺寸
-├── BootScene — 资源加载（带进度条）
-├── MenuScene — 角色选择界面（含技能详情、定位标签、历史记录）
-└── GameScene — 游戏主逻辑
-    ├── 物理系统 (Arcade Physics)
-    ├── 虚拟摇杆 (触控)
-    ├── 自动攻击 & 弹道系统
-    ├── 技能系统 (5 技能 × 3 角色)
-    ├── 升级系统 (3 选 1)
-    ├── Boss 波次系统
-    ├── 道具掉落系统
-    ├── 敌人 HP 条系统
-    ├── 敌人 AI & 波次生成
-    └── 粒子特效 & HUD
+## 部署
+
+直接浏览器打开 `index.html`，或使用任意静态文件服务器：
+
+```bash
+python3 -m http.server 8080
 ```
 
-### 美术资产
-- 角色 & 敌人 sprite sheets 由 AI 生成（v9.0 全面重制，统一 chibi 卡通风格）
-- 背景使用 rembg (U²-Net) 去除
-- WebP 压缩（quality 55）保持文件小
-- 帧尺寸运行时从图片实际宽度自动计算（`frameCount`），不 hardcode
+兼容 GitHub Pages — 推送 `index.html` 到仓库根目录即可。
 
-### 部署
-- **GitHub Pages** — 静态文件托管
-- 零服务端依赖，纯前端
+## 版本历史
 
-## 🔧 开发
-
-### 本地运行
-直接浏览器打开 `index.html` 即可，无需服务器。
-
-## 📝 版本历史
-- **v9.0** — 全面重制 sprite 美术资产：AI 重新生成 14 张高质量 chibi 风格 sprite sheet（3 角色 × 3 动作 + 4 敌人 + 1 Boss），统一美术风格，Boss 拥有专属霸气形象（金黑球衣、火焰拳头、红色发光眼睛）
-- **v8.0** — Boss 波次系统、道具掉落、敌人 HP 条、增强角色选择 UI（技能详情+定位标签）、本地记录保存、难度曲线优化、3 角色各 5 技能完整
-- **v7.4** — LeBron 技能大改（The Block / And One / 空接 / 转身扣篮），新敌人 sprite，XP 平衡
-- **v7.3** — Phaser.js 重构，AI sprite sheets，音效系统
+- **v10.0** — 完全重构代码架构：单体 2000 行 JS 拆分为 17 个模块化源文件；修复敌人投篮系统（球速度被 physics group 重置）；修复升级弹窗点击穿透；新增被动身体拦截机制；游戏模式从生存改为篮筐防御（Hoop Defense）；新增 4 种射程不同的敌人 AI；平衡性全面调整
+- **v9.0** — 全面重制 sprite 美术资产：AI 重新生成 14 张高质量 chibi 风格 sprite sheet
+- **v8.0** — Boss 波次系统、道具掉落、敌人 HP 条、增强角色选择 UI、本地记录保存
+- **v7.4** — LeBron 技能大改，新敌人 sprite，XP 平衡
 - **v7.0** — 从纯 Canvas 迁移到 Phaser.js
 - **v1-v6** — Canvas 原型迭代
 
-## 📄 License
+## License
+
 MIT

@@ -24,6 +24,12 @@ class BootScene extends Phaser.Scene {
   }
 
   create() {
+    // Generate all procedural textures (arena background + particles)
+    generateArenaTextures(this);
+
+    // Register WebGL post-processing pipelines
+    registerPostFXPipelines(this.game);
+
     document.getElementById('loading-screen').style.display = 'none';
 
     const charIds  = ['lebron', 'kobe', 'curry'];

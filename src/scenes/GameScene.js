@@ -27,12 +27,8 @@ class GameScene extends Phaser.Scene {
   create() {
     this.physics.world.setBounds(0, 0, WORLD_W, WORLD_H);
 
-    // Background
-    if (this.textures.exists('court_bg')) {
-      this.add.tileSprite(WORLD_W / 2, WORLD_H / 2, WORLD_W, WORLD_H, 'court_bg');
-    } else {
-      this._drawCourt();
-    }
+    // Background — use new layered arena background
+    drawArenaBackground(this);
 
     // Hoop
     this._createHoop();
@@ -50,6 +46,9 @@ class GameScene extends Phaser.Scene {
     // Camera
     this.cameras.main.setBounds(0, 0, WORLD_W, WORLD_H);
     this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
+
+    // Apply post-processing effects
+    applyPostFX(this);
 
     // Collisions (solid)
     this.physics.add.collider(this.player, this.enemies, this._onPlayerTouchEnemy, null, this);

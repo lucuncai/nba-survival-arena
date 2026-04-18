@@ -6,7 +6,7 @@ async function launchGame() {
   await preCalculateSpriteDimensions();
 
   const config = {
-    type: Phaser.AUTO,
+    type: Phaser.WEBGL,
     width: GW,
     height: GH,
     parent: 'game-container',

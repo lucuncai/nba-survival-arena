@@ -80,6 +80,7 @@ class GameScene extends Phaser.Scene {
     this.bossAlive     = false;
     this.currentBoss   = null;
     this.slowMo        = 1;
+    this._afterimageCounter = 0;
 
     // Input
     this._setupJoystick();
@@ -152,6 +153,7 @@ class GameScene extends Phaser.Scene {
       p.face = mx >= 0 ? 1 : -1;
       p.setFlipX(p.face < 0);
       this._playAnim(p, `${p.charDef.id}_walk`);
+      this._afterimageCounter = VFX.updateAfterimage(this, p, this._afterimageCounter);
     } else {
       p.body.setVelocity(0, 0);
       this._playAnim(p, `${p.charDef.id}_idle`);
@@ -448,19 +450,11 @@ class GameScene extends Phaser.Scene {
   }
 
   fxKillBurst(x, y, color) {
-    for (let i = 0; i < 8; i++) {
-      const a = (i / 8) * Math.PI * 2;
-      const p = this.add.circle(x, y, 5, color, 0.8).setDepth(20);
-      this.tweens.add({
-        targets: p, x: x + Math.cos(a) * 60, y: y + Math.sin(a) * 60,
-        alpha: 0, scale: 0.2, duration: 400, onComplete: () => p.destroy(),
-      });
-    }
+    VFX.killBurst(this, x, y, color);
   }
 
   fxExplosion(x, y) {
-    const c = this.add.circle(x, y, 30, 0xe74c3c, 0.6).setDepth(20);
-    this.tweens.add({ targets: c, scale: 8, alpha: 0, duration: 600, onComplete: () => c.destroy() });
+    VFX.explosion(this, x, y);
   }
 
   // ================================================================

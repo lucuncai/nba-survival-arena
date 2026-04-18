@@ -40,6 +40,7 @@ SRC_FILES = [
     'src/particle_textures.js',
     'src/arena_background.js',
     'src/post_processing.js',
+    'src/vfx.js',
     'src/scenes/BootScene.js',
     'src/scenes/MenuScene.js',
     'src/scenes/GameScene.js',

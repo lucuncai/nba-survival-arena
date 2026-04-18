@@ -73,14 +73,24 @@ Object.assign(GameScene.prototype, {
     const col = isCrit ? '#f1c40f' : '#ffffff';
     this.floatText(enemy.x + Phaser.Math.Between(-15, 15), enemy.y - 30, isCrit ? `${finalDmg}!` : `${finalDmg}`, col);
 
+    // VFX: hit sparks + camera shake
+    VFX.hitSparks(this, enemy.x, enemy.y, isCrit ? 0xf1c40f : 0xff6644, isCrit);
+    VFX.hitShake(this, isCrit);
+
     // Flash
     enemy.setTint(0xff0000);
     this.time.delayedCall(100, () => { if (enemy.active) enemy.clearTint(); });
+
+    // Knockback trail VFX
+    if (knockback && knockback > 50) {
+      VFX.knockbackTrail(this, enemy, isCrit ? 0xf1c40f : 0xff4444);
+    }
 
     // Combo
     this.combo++;
     this.comboTimer = 3;
     if (this.combo > this.maxCombo) this.maxCombo = this.combo;
+    VFX.comboPopup(this, this.combo, enemy.x, enemy.y);
 
     // Life steal
     const p = this.player;
@@ -168,7 +178,7 @@ Object.assign(GameScene.prototype, {
     this.blocks++;
     this.floatText(player.x, player.y - 70, 'BLOCKED!', '#3498db');
     SFX.blocked();
-    this.fxPulse(player.x, player.y, 0x3498db);
+    VFX.blockExplosion(this, ball.x, ball.y);
     if (ball._trail) ball._trail.destroy();
     ball.destroy();
     this._grantXP(15);
@@ -185,6 +195,7 @@ Object.assign(GameScene.prototype, {
     this.blocks++;
     this.floatText(ball.x, ball.y - 30, 'BLOCKED!', '#3498db');
     SFX.blocked();
+    VFX.blockExplosion(this, ball.x, ball.y);
     if (ball._trail) ball._trail.destroy();
     ball.destroy();
     proj.destroy();

@@ -94,7 +94,10 @@ Object.assign(GameScene.prototype, {
     const warn = document.getElementById('boss-warning');
     warn.style.display = 'block';
     SFX.bossWarn();
-    this.cameras.main.shake(800, 0.015);
+
+    // VFX: dramatic boss warning effect
+    VFX.bossWarning(this);
+
     setTimeout(() => { warn.style.display = 'none'; }, 2000);
   },
 });

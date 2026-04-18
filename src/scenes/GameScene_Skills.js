@@ -72,10 +72,13 @@ Object.assign(GameScene.prototype, {
 
     // Visual arc
     const arc = this.add.graphics().setDepth(20);
-    arc.fillStyle(0x3498db, 0.4);
+    arc.fillStyle(0xf1c40f, 0.35);
     arc.slice(p.x, p.y, range, angle - Math.PI / 3, angle + Math.PI / 3, false);
     arc.fillPath();
     this.tweens.add({ targets: arc, alpha: 0, duration: 400, onComplete: () => arc.destroy() });
+
+    // VFX: golden shockwave
+    VFX.lebronBlock(this, p.x, p.y, range, angle);
 
     // Destroy enemy balls in fan
     let blocked = 0;
@@ -85,7 +88,8 @@ Object.assign(GameScene.prototype, {
       if (d < range) {
         const a = Math.atan2(ball.y - p.y, ball.x - p.x);
         if (Math.abs(Phaser.Math.Angle.Wrap(a - angle)) < Math.PI / 3) {
-          this.floatText(ball.x, ball.y - 20, 'BLOCKED!', '#3498db');
+          this.floatText(ball.x, ball.y - 20, 'BLOCKED!', '#f1c40f');
+          VFX.blockExplosion(this, ball.x, ball.y);
           if (ball._trail) ball._trail.destroy();
           ball.destroy();
           blocked++;
@@ -121,8 +125,8 @@ Object.assign(GameScene.prototype, {
     this.tweens.add({
       targets: p, x: p.x + dir * 300, duration: 300, ease: 'Quad.easeOut',
       onUpdate: () => {
-        const trail = this.add.circle(p.x, p.y, 20, 0xf1c40f, 0.4).setDepth(8);
-        this.tweens.add({ targets: trail, alpha: 0, scale: 0.3, duration: 300, onComplete: () => trail.destroy() });
+        // VFX: golden charge trail
+        VFX.lebronCharge(this, p.x, p.y);
         this.enemies.getChildren().forEach(e => {
           if (!e.active || e.isDead || hitEnemies.has(e)) return;
           if (Phaser.Math.Distance.Between(p.x, p.y, e.x, e.y) < 80) {
@@ -140,9 +144,9 @@ Object.assign(GameScene.prototype, {
     const range = 250;
     const dmg = p.atk * p.atkMul * 2.5;
 
-    const wave = this.add.circle(p.x, p.y, 30, 0xe74c3c, 0.5).setDepth(20);
-    this.tweens.add({ targets: wave, scale: range / 30, alpha: 0, duration: 500, onComplete: () => wave.destroy() });
-    this.cameras.main.shake(300, 0.02);
+    // VFX: earthquake dust and ground crack
+    VFX.lebronEarthquake(this, p.x, p.y, range);
+    this.cameras.main.shake(400, 0.025);
 
     this.enemies.getChildren().forEach(e => {
       if (!e.active || e.isDead) return;
@@ -166,6 +170,7 @@ Object.assign(GameScene.prototype, {
       if (!ball.active) return;
       if (Phaser.Math.Distance.Between(p.x, p.y, ball.x, ball.y) < range) {
         this.blocks++;
+        VFX.blockExplosion(this, ball.x, ball.y);
         if (ball._trail) ball._trail.destroy();
         ball.destroy();
       }
@@ -177,9 +182,12 @@ Object.assign(GameScene.prototype, {
     const p = this.player;
     p.kingDomain = 8;
 
-    const aura     = this.add.circle(p.x, p.y, 300, 0xf1c40f, 0.15).setDepth(3);
+    const aura     = this.add.circle(p.x, p.y, 300, 0xf1c40f, 0.12).setDepth(3);
     const auraEdge = this.add.circle(p.x, p.y, 300, 0xf1c40f, 0).setDepth(3).setStrokeStyle(3, 0xf1c40f, 0.6);
     this.floatText(p.x, p.y - 80, "KING'S DOMAIN!", '#f1c40f');
+
+    // VFX: golden orbiting particles
+    VFX.lebronDomain(this, p);
 
     const timer = this.time.addEvent({
       delay: 50, repeat: 160, callback: () => {
@@ -201,7 +209,15 @@ Object.assign(GameScene.prototype, {
     const dir = p.face;
     const dmg = p.atk * p.atkMul * 2;
 
-    this.tweens.add({ targets: p, x: p.x - dir * 150, duration: 200, ease: 'Quad.easeOut' });
+    // VFX: purple flame on backward dash
+    VFX.kobeFadeaway(this, p.x, p.y);
+
+    this.tweens.add({
+      targets: p, x: p.x - dir * 150, duration: 200, ease: 'Quad.easeOut',
+      onUpdate: () => {
+        VFX.kobeFadeaway(this, p.x, p.y);
+      },
+    });
     this.time.delayedCall(150, () => {
       for (let i = -1; i <= 1; i++) {
         const angle = (dir > 0 ? 0 : Math.PI) + i * 0.2;
@@ -221,8 +237,8 @@ Object.assign(GameScene.prototype, {
     this.tweens.add({
       targets: p, x: p.x + dir * 350, duration: 250, ease: 'Quad.easeOut',
       onUpdate: () => {
-        const trail = this.add.circle(p.x, p.y, 18, 0x9b59b6, 0.5).setDepth(8);
-        this.tweens.add({ targets: trail, alpha: 0, scale: 0.2, duration: 300, onComplete: () => trail.destroy() });
+        // VFX: purple afterimage clones
+        VFX.kobeViperStrike(this, p);
         this.enemies.getChildren().forEach(e => {
           if (!e.active || e.isDead || hitEnemies.has(e)) return;
           if (Phaser.Math.Distance.Between(p.x, p.y, e.x, e.y) < 70) {
@@ -278,15 +294,14 @@ Object.assign(GameScene.prototype, {
     p.mambaMode = 10;
     this.floatText(p.x, p.y - 80, 'MAMBA MODE!', '#9b59b6');
 
-    const aura = this.add.circle(p.x, p.y, 60, 0x9b59b6, 0.3).setDepth(3);
+    // VFX: purple flame aura
+    VFX.kobeMambaMode(this, p);
+
+    const aura = this.add.circle(p.x, p.y, 60, 0x9b59b6, 0.2).setDepth(3);
     const timer = this.time.addEvent({
       delay: 50, repeat: 200, callback: () => {
         if (!p.active || this.gameOver) { aura.destroy(); timer.remove(); return; }
         aura.setPosition(p.x, p.y);
-        if (Math.random() < 0.3) {
-          const ghost = this.add.circle(p.x, p.y, 20, 0x9b59b6, 0.3).setDepth(2);
-          this.tweens.add({ targets: ghost, alpha: 0, scale: 0.5, duration: 400, onComplete: () => ghost.destroy() });
-        }
         if (p.mambaMode <= 0) { aura.destroy(); timer.remove(); }
       },
     });
@@ -309,8 +324,9 @@ Object.assign(GameScene.prototype, {
     this.tweens.add({
       targets: bomb, x: targetX, y: targetY, duration: 400, ease: 'Quad.easeIn',
       onComplete: () => {
-        this.fxExplosion(bomb.x, bomb.y);
-        this.cameras.main.shake(200, 0.01);
+        // VFX: blue-white firework explosion
+        VFX.currySplashBomb(this, bomb.x, bomb.y);
+        this.cameras.main.shake(200, 0.012);
         this.enemies.getChildren().forEach(e => {
           if (!e.active || e.isDead) return;
           if (Phaser.Math.Distance.Between(bomb.x, bomb.y, e.x, e.y) < explodeRadius) {
@@ -321,6 +337,7 @@ Object.assign(GameScene.prototype, {
           if (!ball.active) return;
           if (Phaser.Math.Distance.Between(bomb.x, bomb.y, ball.x, ball.y) < explodeRadius) {
             this.blocks++;
+            VFX.blockExplosion(this, ball.x, ball.y);
             if (ball._trail) ball._trail.destroy();
             ball.destroy();
           }
@@ -339,8 +356,8 @@ Object.assign(GameScene.prototype, {
       const angle = (i / count) * Math.PI * 2;
       this._fireProjectile(p.x, p.y, angle, dmg, 400, 350, false, 200);
     }
-    const ring = this.add.circle(p.x, p.y, 30, 0x3498db, 0.3).setDepth(20);
-    this.tweens.add({ targets: ring, scale: 12, alpha: 0, duration: 600, onComplete: () => ring.destroy() });
+    // VFX: blue energy ring burst
+    VFX.curryCrossover(this, p.x, p.y);
   },
 
   /** Skill 3: Pick & Roll — summon a blocking phantom wall for 5s. */
@@ -359,6 +376,7 @@ Object.assign(GameScene.prototype, {
         if (!ball.active) return;
         this.blocks++;
         this.floatText(ball.x, ball.y - 20, 'BLOCKED!', '#3498db');
+        VFX.blockExplosion(this, ball.x, ball.y);
         if (ball._trail) ball._trail.destroy();
         ball.destroy();
       });
@@ -375,7 +393,10 @@ Object.assign(GameScene.prototype, {
     p.nightNight = 6;
     this.floatText(p.x, p.y - 80, 'NIGHT NIGHT!', '#3498db');
 
-    const overlay = this.add.rectangle(WORLD_W / 2, WORLD_H / 2, WORLD_W, WORLD_H, 0x000033, 0.2).setDepth(1);
+    // VFX: deep blue ripple wave
+    VFX.curryNightNight(this, p.x, p.y);
+
+    const overlay = this.add.rectangle(WORLD_W / 2, WORLD_H / 2, WORLD_W, WORLD_H, 0x000033, 0.15).setDepth(1);
     const timer = this.time.addEvent({
       delay: 50, repeat: 120, callback: () => {
         if (!p.active || this.gameOver || p.nightNight <= 0) {

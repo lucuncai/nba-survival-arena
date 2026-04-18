@@ -11,3 +11,4 @@ test_*.txt
 game_code.js
 html_head.txt
 html_tail.txt
+test_crash.html

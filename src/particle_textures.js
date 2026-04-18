@@ -1,15 +1,13 @@
 /* ================================================================
- *  particle_textures.js — Procedural Particle Textures
+ *  particle_textures.js — NEON Procedural Particle Textures
  *
- *  Creates 4 reusable tiny particle textures using Canvas:
- *    1. 'particle_glow'  — Soft radial glow (for auras, healing, energy)
- *    2. 'particle_spark' — Hard bright spark (for hits, impacts, crits)
- *    3. 'particle_smoke' — Soft smoke puff (for explosions, trails)
- *    4. 'particle_ring'  — Ring/halo shape (for shockwaves, skill activations)
+ *  Creates 4 reusable particle textures optimized for neon/cyberpunk:
+ *    1. 'particle_glow'  — Bright soft glow (neon auras, energy)
+ *    2. 'particle_spark' — Hard neon spark with star rays
+ *    3. 'particle_smoke' — Electric smoke/plasma puff
+ *    4. 'particle_ring'  — Neon ring/halo for shockwaves
  *
- *  All textures are small (32-64px) and designed for use with Phaser
- *  particle emitters, tweened sprites, or blend-mode overlays.
- *
+ *  All white-based so they can be tinted to any neon color via Phaser.
  *  Called from generateArenaTextures() in arena_background.js
  * ================================================================ */
 
@@ -21,148 +19,132 @@ function _generateParticleTextures(scene) {
 }
 
 /* ----------------------------------------------------------------
- *  1. SOFT GLOW — smooth radial gradient, white center fading out
- *     Use: auras, energy orbs, healing effects, ambient particles
+ *  1. SOFT GLOW — bright center, wide falloff for neon auras
  * ---------------------------------------------------------------- */
 function _genParticleGlow(scene) {
   const S = 64;
-  const canvas = document.createElement('canvas');
-  canvas.width = S;
-  canvas.height = S;
-  const ctx = canvas.getContext('2d');
+  const c = document.createElement('canvas');
+  c.width = S; c.height = S;
+  const ctx = c.getContext('2d');
 
-  const grad = ctx.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2);
-  grad.addColorStop(0, 'rgba(255,255,255,1.0)');
-  grad.addColorStop(0.15, 'rgba(255,255,255,0.8)');
-  grad.addColorStop(0.4, 'rgba(255,255,255,0.35)');
-  grad.addColorStop(0.7, 'rgba(255,255,255,0.1)');
-  grad.addColorStop(1.0, 'rgba(255,255,255,0.0)');
-  ctx.fillStyle = grad;
+  const g = ctx.createRadialGradient(S/2, S/2, 0, S/2, S/2, S/2);
+  g.addColorStop(0, 'rgba(255,255,255,1.0)');
+  g.addColorStop(0.1, 'rgba(255,255,255,0.9)');
+  g.addColorStop(0.3, 'rgba(255,255,255,0.5)');
+  g.addColorStop(0.6, 'rgba(255,255,255,0.15)');
+  g.addColorStop(1.0, 'rgba(255,255,255,0.0)');
+  ctx.fillStyle = g;
   ctx.fillRect(0, 0, S, S);
 
-  scene.textures.addCanvas('particle_glow', canvas);
+  scene.textures.addCanvas('particle_glow', c);
 }
 
 /* ----------------------------------------------------------------
- *  2. HARD SPARK — bright center with sharp falloff and rays
- *     Use: impact sparks, critical hits, metallic clashes
+ *  2. HARD SPARK — bright core with 6-ray star burst
  * ---------------------------------------------------------------- */
 function _genParticleSpark(scene) {
-  const S = 32;
-  const canvas = document.createElement('canvas');
-  canvas.width = S;
-  canvas.height = S;
-  const ctx = canvas.getContext('2d');
-  const cx = S / 2, cy = S / 2;
+  const S = 48;
+  const c = document.createElement('canvas');
+  c.width = S; c.height = S;
+  const ctx = c.getContext('2d');
+  const cx = S/2, cy = S/2;
 
-  // Core bright dot
-  const coreGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, S * 0.15);
-  coreGrad.addColorStop(0, 'rgba(255,255,255,1.0)');
-  coreGrad.addColorStop(0.5, 'rgba(255,255,200,0.9)');
-  coreGrad.addColorStop(1, 'rgba(255,200,100,0.0)');
-  ctx.fillStyle = coreGrad;
+  // Bright core
+  const core = ctx.createRadialGradient(cx, cy, 0, cx, cy, S*0.12);
+  core.addColorStop(0, 'rgba(255,255,255,1.0)');
+  core.addColorStop(0.6, 'rgba(255,255,255,0.8)');
+  core.addColorStop(1, 'rgba(255,255,255,0.0)');
+  ctx.fillStyle = core;
   ctx.fillRect(0, 0, S, S);
 
-  // Cross/star rays
+  // 6-point star rays
   ctx.globalCompositeOperation = 'lighter';
-  for (let i = 0; i < 4; i++) {
-    const angle = (i / 4) * Math.PI * 2 + Math.PI / 4;
+  for (let i = 0; i < 6; i++) {
+    const angle = (i / 6) * Math.PI * 2;
     ctx.save();
     ctx.translate(cx, cy);
     ctx.rotate(angle);
 
-    const rayGrad = ctx.createLinearGradient(0, 0, S * 0.45, 0);
-    rayGrad.addColorStop(0, 'rgba(255,255,255,0.8)');
-    rayGrad.addColorStop(0.3, 'rgba(255,240,180,0.4)');
-    rayGrad.addColorStop(1, 'rgba(255,200,100,0.0)');
-    ctx.fillStyle = rayGrad;
-    ctx.fillRect(0, -1.5, S * 0.45, 3);
+    const ray = ctx.createLinearGradient(0, 0, S * 0.45, 0);
+    ray.addColorStop(0, 'rgba(255,255,255,0.9)');
+    ray.addColorStop(0.2, 'rgba(255,255,255,0.5)');
+    ray.addColorStop(0.6, 'rgba(255,255,255,0.15)');
+    ray.addColorStop(1, 'rgba(255,255,255,0.0)');
+    ctx.fillStyle = ray;
+    ctx.fillRect(0, -1, S * 0.45, 2);
 
     ctx.restore();
   }
   ctx.globalCompositeOperation = 'source-over';
 
-  scene.textures.addCanvas('particle_spark', canvas);
+  scene.textures.addCanvas('particle_spark', c);
 }
 
 /* ----------------------------------------------------------------
- *  3. SMOKE PUFF — soft, cloudy, slightly irregular blob
- *     Use: explosions, dust clouds, dash trails, death effects
+ *  3. SMOKE PUFF — electric plasma cloud
  * ---------------------------------------------------------------- */
 function _genParticleSmoke(scene) {
   const S = 64;
-  const canvas = document.createElement('canvas');
-  canvas.width = S;
-  canvas.height = S;
-  const ctx = canvas.getContext('2d');
-  const cx = S / 2, cy = S / 2;
+  const c = document.createElement('canvas');
+  c.width = S; c.height = S;
+  const ctx = c.getContext('2d');
+  const cx = S/2, cy = S/2;
 
-  // Build up from multiple offset soft circles for cloud shape
-  ctx.globalCompositeOperation = 'source-over';
   const blobs = [
     { x: 0, y: 0, r: S * 0.38 },
-    { x: -S * 0.1, y: -S * 0.08, r: S * 0.28 },
-    { x: S * 0.12, y: -S * 0.06, r: S * 0.25 },
-    { x: -S * 0.06, y: S * 0.1, r: S * 0.3 },
-    { x: S * 0.08, y: S * 0.08, r: S * 0.22 },
+    { x: -S*0.12, y: -S*0.08, r: S * 0.28 },
+    { x: S*0.14, y: -S*0.06, r: S * 0.26 },
+    { x: -S*0.06, y: S*0.12, r: S * 0.30 },
+    { x: S*0.10, y: S*0.10, r: S * 0.24 },
+    { x: 0, y: -S*0.14, r: S * 0.20 },
   ];
 
   for (const blob of blobs) {
-    const bx = cx + blob.x;
-    const by = cy + blob.y;
-    const grad = ctx.createRadialGradient(bx, by, 0, bx, by, blob.r);
-    grad.addColorStop(0, 'rgba(255,255,255,0.4)');
-    grad.addColorStop(0.4, 'rgba(255,255,255,0.25)');
-    grad.addColorStop(0.7, 'rgba(255,255,255,0.1)');
-    grad.addColorStop(1, 'rgba(255,255,255,0.0)');
-    ctx.fillStyle = grad;
+    const bx = cx + blob.x, by = cy + blob.y;
+    const g = ctx.createRadialGradient(bx, by, 0, bx, by, blob.r);
+    g.addColorStop(0, 'rgba(255,255,255,0.5)');
+    g.addColorStop(0.3, 'rgba(255,255,255,0.3)');
+    g.addColorStop(0.6, 'rgba(255,255,255,0.1)');
+    g.addColorStop(1, 'rgba(255,255,255,0.0)');
+    ctx.fillStyle = g;
     ctx.beginPath();
     ctx.arc(bx, by, blob.r, 0, Math.PI * 2);
     ctx.fill();
   }
 
-  scene.textures.addCanvas('particle_smoke', canvas);
+  scene.textures.addCanvas('particle_smoke', c);
 }
 
 /* ----------------------------------------------------------------
- *  4. RING / HALO — hollow circle that fades at edges
- *     Use: shockwaves, skill activation rings, buff indicators
+ *  4. RING / HALO — crisp neon ring for shockwaves
  * ---------------------------------------------------------------- */
 function _genParticleRing(scene) {
   const S = 64;
-  const canvas = document.createElement('canvas');
-  canvas.width = S;
-  canvas.height = S;
-  const ctx = canvas.getContext('2d');
-  const cx = S / 2, cy = S / 2;
-  const outerR = S * 0.45;
-  const innerR = S * 0.30;
+  const c = document.createElement('canvas');
+  c.width = S; c.height = S;
+  const ctx = c.getContext('2d');
+  const cx = S/2, cy = S/2;
 
-  // Draw ring using two radial gradients
-  // Outer fade
-  const outerGrad = ctx.createRadialGradient(cx, cy, innerR - 2, cx, cy, outerR + 2);
-  outerGrad.addColorStop(0, 'rgba(255,255,255,0.0)');
-  outerGrad.addColorStop(0.25, 'rgba(255,255,255,0.6)');
-  outerGrad.addColorStop(0.5, 'rgba(255,255,255,1.0)');
-  outerGrad.addColorStop(0.75, 'rgba(255,255,255,0.6)');
-  outerGrad.addColorStop(1, 'rgba(255,255,255,0.0)');
-
-  ctx.fillStyle = outerGrad;
+  // Draw a bright ring
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = 'rgba(255,255,255,1.0)';
   ctx.beginPath();
-  ctx.arc(cx, cy, outerR + 2, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.arc(cx, cy, S * 0.35, 0, Math.PI * 2);
+  ctx.stroke();
 
-  // Clear center to make it a ring
-  ctx.globalCompositeOperation = 'destination-out';
-  const clearGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, innerR);
-  clearGrad.addColorStop(0, 'rgba(0,0,0,1.0)');
-  clearGrad.addColorStop(0.7, 'rgba(0,0,0,0.8)');
-  clearGrad.addColorStop(1, 'rgba(0,0,0,0.0)');
-  ctx.fillStyle = clearGrad;
+  // Outer glow
+  ctx.lineWidth = 10;
+  ctx.strokeStyle = 'rgba(255,255,255,0.25)';
   ctx.beginPath();
-  ctx.arc(cx, cy, innerR, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.globalCompositeOperation = 'source-over';
+  ctx.arc(cx, cy, S * 0.35, 0, Math.PI * 2);
+  ctx.stroke();
 
-  scene.textures.addCanvas('particle_ring', canvas);
+  // Inner glow
+  ctx.lineWidth = 6;
+  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+  ctx.beginPath();
+  ctx.arc(cx, cy, S * 0.35, 0, Math.PI * 2);
+  ctx.stroke();
+
+  scene.textures.addCanvas('particle_ring', c);
 }

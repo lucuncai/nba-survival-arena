@@ -1,212 +1,239 @@
 /* ================================================================
- *  post_processing.js — WebGL Post-Processing Pipelines
+ *  post_processing.js — Canvas-Compatible Post-Processing Effects
  *
- *  Custom Phaser render pipelines for:
- *    1. Bloom/glow effect
- *    2. Screen-wide vignette via shader
- *    3. Subtle CRT scanlines + film grain
+ *  Since WebGL may not be available, these effects use Phaser's
+ *  built-in features (graphics, images, blend modes, tweens)
+ *  to simulate post-processing:
+ *    1. Bloom/glow — ADD blend mode overlays on bright elements
+ *    2. Vignette — camera-fixed dark gradient overlay
+ *    3. Chromatic aberration — subtle RGB-shifted overlay
+ *    4. CRT scanlines — semi-transparent line pattern overlay
  *
- *  These are registered as camera post-FX pipelines when WebGL
- *  is available, with graceful fallback for Canvas renderer.
+ *  If WebGL IS available, we register proper PostFX pipelines.
  * ================================================================ */
 
 /* ----------------------------------------------------------------
- *  BLOOM PIPELINE
- *  Extracts bright pixels and applies a soft blur glow overlay.
+ *  WebGL SHADER PIPELINES (used only when WebGL is available)
  * ---------------------------------------------------------------- */
-const BloomPostFX_FRAG = `
+
+const _BloomFrag = `
 precision mediump float;
 uniform sampler2D uMainSampler;
 uniform vec2 uResolution;
 uniform float uIntensity;
 uniform float uThreshold;
 varying vec2 outTexCoord;
-
 void main() {
     vec4 color = texture2D(uMainSampler, outTexCoord);
-
-    // Extract bright areas
-    float brightness = dot(color.rgb, vec3(0.2126, 0.7152, 0.0722));
-    vec3 bright = color.rgb * smoothstep(uThreshold, uThreshold + 0.15, brightness);
-
-    // Simple 9-tap box blur for glow
-    vec2 texelSize = 1.0 / uResolution;
-    vec3 blur = vec3(0.0);
-    for (int x = -2; x <= 2; x++) {
-        for (int y = -2; y <= 2; y++) {
-            vec2 offset = vec2(float(x), float(y)) * texelSize * 3.0;
-            vec4 s = texture2D(uMainSampler, outTexCoord + offset);
+    vec2 texel = 1.0 / uResolution;
+    vec3 bloom = vec3(0.0);
+    float tw = 0.0;
+    for (int x = -3; x <= 3; x++) {
+        for (int y = -3; y <= 3; y++) {
+            vec2 off = vec2(float(x), float(y)) * texel * 3.0;
+            vec4 s = texture2D(uMainSampler, outTexCoord + off);
             float b = dot(s.rgb, vec3(0.2126, 0.7152, 0.0722));
-            blur += s.rgb * smoothstep(uThreshold, uThreshold + 0.15, b);
+            float w = smoothstep(uThreshold, uThreshold + 0.15, b);
+            bloom += s.rgb * w;
+            tw += w;
         }
     }
-    blur /= 25.0;
-
-    // Combine original + bloom
-    vec3 result = color.rgb + blur * uIntensity;
+    if (tw > 0.0) bloom /= tw;
+    vec3 result = color.rgb + bloom * uIntensity;
+    float gray = dot(result, vec3(0.299, 0.587, 0.114));
+    result = mix(vec3(gray), result, 1.15);
     gl_FragColor = vec4(result, color.a);
 }
 `;
 
-class BloomPostFXPipeline extends Phaser.Renderer.WebGL.Pipelines.PostFXPipeline {
-  constructor(game) {
-    super({
-      game,
-      name: 'BloomPostFX',
-      fragShader: BloomPostFX_FRAG,
-    });
-    this._intensity = 0.6;
-    this._threshold = 0.35;
-  }
-
-  onPreRender() {
-    this.set1f('uIntensity', this._intensity);
-    this.set1f('uThreshold', this._threshold);
-    this.set2f('uResolution', this.renderer.width, this.renderer.height);
-  }
+const _ChromaFrag = `
+precision mediump float;
+uniform sampler2D uMainSampler;
+uniform vec2 uResolution;
+uniform float uAmount;
+varying vec2 outTexCoord;
+void main() {
+    vec2 dir = (outTexCoord - 0.5) * 2.0;
+    float dist = length(dir);
+    vec2 offset = dir * dist * uAmount / uResolution;
+    float r = texture2D(uMainSampler, outTexCoord + offset).r;
+    float g = texture2D(uMainSampler, outTexCoord).g;
+    float b = texture2D(uMainSampler, outTexCoord - offset).b;
+    float a = texture2D(uMainSampler, outTexCoord).a;
+    gl_FragColor = vec4(r, g, b, a);
 }
+`;
 
-/* ----------------------------------------------------------------
- *  VIGNETTE SHADER PIPELINE
- *  Darkens screen edges for cinematic atmosphere.
- * ---------------------------------------------------------------- */
-const VignettePostFX_FRAG = `
+const _VignetteFrag = `
 precision mediump float;
 uniform sampler2D uMainSampler;
 uniform float uRadius;
 uniform float uSoftness;
 uniform float uDarkness;
 varying vec2 outTexCoord;
-
 void main() {
     vec4 color = texture2D(uMainSampler, outTexCoord);
-    vec2 center = vec2(0.5, 0.5);
-    float dist = distance(outTexCoord, center);
-    float vignette = smoothstep(uRadius, uRadius - uSoftness, dist);
-    color.rgb *= mix(1.0 - uDarkness, 1.0, vignette);
+    float dist = distance(outTexCoord, vec2(0.5));
+    float vig = smoothstep(uRadius, uRadius - uSoftness, dist);
+    color.rgb *= mix(1.0 - uDarkness, 1.0, vig);
     gl_FragColor = color;
 }
 `;
 
-class VignettePostFXPipeline extends Phaser.Renderer.WebGL.Pipelines.PostFXPipeline {
-  constructor(game) {
-    super({
-      game,
-      name: 'VignettePostFX',
-      fragShader: VignettePostFX_FRAG,
-    });
-    this._radius = 0.75;
-    this._softness = 0.45;
-    this._darkness = 0.45;
-  }
-
-  onPreRender() {
-    this.set1f('uRadius', this._radius);
-    this.set1f('uSoftness', this._softness);
-    this.set1f('uDarkness', this._darkness);
-  }
-}
-
-/* ----------------------------------------------------------------
- *  CRT / FILM GRAIN PIPELINE
- *  Adds subtle scanlines and animated film grain for style.
- * ---------------------------------------------------------------- */
-const CRTGrainPostFX_FRAG = `
+const _CRTFrag = `
 precision mediump float;
 uniform sampler2D uMainSampler;
 uniform vec2 uResolution;
 uniform float uTime;
-uniform float uGrainIntensity;
-uniform float uScanlineIntensity;
 varying vec2 outTexCoord;
-
-// Simple pseudo-random
-float rand(vec2 co) {
-    return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
-}
-
+float rand(vec2 co) { return fract(sin(dot(co, vec2(12.9898,78.233))) * 43758.5453); }
 void main() {
     vec4 color = texture2D(uMainSampler, outTexCoord);
-
-    // Film grain
-    float grain = (rand(outTexCoord * uResolution + vec2(uTime * 100.0, uTime * 57.0)) - 0.5) * uGrainIntensity;
+    float grain = (rand(outTexCoord * uResolution + vec2(uTime * 137.0, uTime * 71.0)) - 0.5) * 0.04;
     color.rgb += vec3(grain);
-
-    // Scanlines
-    float scanline = sin(outTexCoord.y * uResolution.y * 1.5) * 0.5 + 0.5;
-    scanline = pow(scanline, 1.5);
-    color.rgb *= 1.0 - (1.0 - scanline) * uScanlineIntensity;
-
+    float sl = sin(outTexCoord.y * uResolution.y * 1.2) * 0.5 + 0.5;
+    color.rgb *= 1.0 - (1.0 - pow(sl, 2.0)) * 0.06;
     gl_FragColor = color;
 }
 `;
 
-class CRTGrainPostFXPipeline extends Phaser.Renderer.WebGL.Pipelines.PostFXPipeline {
-  constructor(game) {
-    super({
-      game,
-      name: 'CRTGrainPostFX',
-      fragShader: CRTGrainPostFX_FRAG,
-    });
-    this._grainIntensity = 0.03;
-    this._scanlineIntensity = 0.04;
-    this._time = 0;
-  }
+/* Pipeline classes — only instantiated if WebGL is available */
+let _pipelinesAvailable = false;
 
-  onPreRender() {
-    this._time += 0.016; // ~60fps increment
-    this.set2f('uResolution', this.renderer.width, this.renderer.height);
-    this.set1f('uTime', this._time);
-    this.set1f('uGrainIntensity', this._grainIntensity);
-    this.set1f('uScanlineIntensity', this._scanlineIntensity);
+function _tryDefineBloom() {
+  return class extends Phaser.Renderer.WebGL.Pipelines.PostFXPipeline {
+    constructor(game) { super({ game, name: 'BloomPostFX', fragShader: _BloomFrag }); }
+    onPreRender() {
+      this.set1f('uIntensity', 1.4);
+      this.set1f('uThreshold', 0.12);
+      this.set2f('uResolution', this.renderer.width, this.renderer.height);
+    }
+  };
+}
+
+function _tryDefineChroma() {
+  return class extends Phaser.Renderer.WebGL.Pipelines.PostFXPipeline {
+    constructor(game) { super({ game, name: 'ChromaticPostFX', fragShader: _ChromaFrag }); }
+    onPreRender() {
+      this.set2f('uResolution', this.renderer.width, this.renderer.height);
+      this.set1f('uAmount', 2.5);
+    }
+  };
+}
+
+function _tryDefineVignette() {
+  return class extends Phaser.Renderer.WebGL.Pipelines.PostFXPipeline {
+    constructor(game) { super({ game, name: 'VignettePostFX', fragShader: _VignetteFrag }); }
+    onPreRender() {
+      this.set1f('uRadius', 0.75);
+      this.set1f('uSoftness', 0.55);
+      this.set1f('uDarkness', 0.55);
+    }
+  };
+}
+
+function _tryDefineCRT() {
+  return class extends Phaser.Renderer.WebGL.Pipelines.PostFXPipeline {
+    constructor(game) { super({ game, name: 'CRTGrainPostFX', fragShader: _CRTFrag }); this._t = 0; }
+    onPreRender() {
+      this._t += 0.016;
+      this.set2f('uResolution', this.renderer.width, this.renderer.height);
+      this.set1f('uTime', this._t);
+    }
+  };
+}
+
+/* ----------------------------------------------------------------
+ *  REGISTRATION
+ * ---------------------------------------------------------------- */
+function registerPostFXPipelines(game) {
+  // Check if WebGL renderer is actually active
+  if (!game.renderer || game.renderer.type !== Phaser.WEBGL) {
+    console.log('[PostFX] Canvas renderer detected — using overlay-based effects');
+    _pipelinesAvailable = false;
+    return false;
+  }
+  if (!game.renderer.pipelines) {
+    console.log('[PostFX] No pipeline support — using overlay-based effects');
+    _pipelinesAvailable = false;
+    return false;
+  }
+  try {
+    game.renderer.pipelines.addPostPipeline('BloomPostFX', _tryDefineBloom());
+    game.renderer.pipelines.addPostPipeline('ChromaticPostFX', _tryDefineChroma());
+    game.renderer.pipelines.addPostPipeline('VignettePostFX', _tryDefineVignette());
+    game.renderer.pipelines.addPostPipeline('CRTGrainPostFX', _tryDefineCRT());
+    _pipelinesAvailable = true;
+    console.log('[PostFX] WebGL pipelines registered');
+    return true;
+  } catch (e) {
+    console.warn('[PostFX] Pipeline registration failed:', e);
+    _pipelinesAvailable = false;
+    return false;
   }
 }
 
 /* ----------------------------------------------------------------
- *  REGISTRATION & APPLICATION HELPERS
+ *  APPLICATION — tries WebGL pipelines first, falls back to overlays
  * ---------------------------------------------------------------- */
-
-/**
- * Register all custom pipelines with the Phaser game renderer.
- * Must be called after game creation but before scenes apply them.
- * Returns true if WebGL pipelines are available.
- */
-function registerPostFXPipelines(game) {
-  // Only works with WebGL renderer
-  if (!game.renderer || !game.renderer.pipelines) {
-    console.log('[PostFX] Canvas renderer detected — skipping shader pipelines');
-    return false;
+function applyPostFX(scene) {
+  if (_pipelinesAvailable) {
+    try {
+      const cam = scene.cameras.main;
+      cam.setPostPipeline('BloomPostFX');
+      cam.setPostPipeline('ChromaticPostFX');
+      cam.setPostPipeline('VignettePostFX');
+      cam.setPostPipeline('CRTGrainPostFX');
+      console.log('[PostFX] WebGL shader chain applied');
+      return;
+    } catch (e) {
+      console.warn('[PostFX] WebGL apply failed, falling back:', e);
+    }
   }
 
-  try {
-    game.renderer.pipelines.addPostPipeline('BloomPostFX', BloomPostFXPipeline);
-    game.renderer.pipelines.addPostPipeline('VignettePostFX', VignettePostFXPipeline);
-    game.renderer.pipelines.addPostPipeline('CRTGrainPostFX', CRTGrainPostFXPipeline);
-    console.log('[PostFX] All shader pipelines registered successfully');
-    return true;
-  } catch (e) {
-    console.warn('[PostFX] Failed to register pipelines:', e);
-    return false;
-  }
+  // --- CANVAS FALLBACK: overlay-based effects ---
+  console.log('[PostFX] Applying canvas overlay effects');
+  _applyCanvasOverlayEffects(scene);
 }
 
-/**
- * Apply post-processing effects to the main camera.
- * Called from GameScene.create() after the scene is set up.
- */
-function applyPostFX(scene) {
-  const cam = scene.cameras.main;
-  if (!cam.setPostPipeline) {
-    console.log('[PostFX] Camera post-pipeline not supported');
-    return;
+/* ----------------------------------------------------------------
+ *  CANVAS OVERLAY EFFECTS — works without WebGL
+ * ---------------------------------------------------------------- */
+function _applyCanvasOverlayEffects(scene) {
+  // 1. SCANLINE OVERLAY — subtle CRT feel
+  const scanlineCanvas = document.createElement('canvas');
+  scanlineCanvas.width = 128;
+  scanlineCanvas.height = 128;
+  const slCtx = scanlineCanvas.getContext('2d');
+  for (let y = 0; y < 128; y += 4) {
+    slCtx.fillStyle = 'rgba(0,0,0,0.06)';
+    slCtx.fillRect(0, y, 128, 2);
   }
+  if (!scene.textures.exists('scanline_overlay')) {
+    scene.textures.addCanvas('scanline_overlay', scanlineCanvas);
+  }
+  scene.add.tileSprite(GW/2, GH/2, GW, GH, 'scanline_overlay')
+    .setScrollFactor(0).setDepth(46).setAlpha(0.5);
 
-  try {
-    cam.setPostPipeline('BloomPostFX');
-    cam.setPostPipeline('VignettePostFX');
-    cam.setPostPipeline('CRTGrainPostFX');
-    console.log('[PostFX] All effects applied to main camera');
-  } catch (e) {
-    console.warn('[PostFX] Failed to apply post-FX:', e);
+  // 2. BLOOM SIMULATION — bright glow layer at center of action
+  // This is handled by the arena background spotlights with ADD blend mode
+  // The neon glow lines + ADD blend spotlights already create a bloom-like effect
+
+  // 3. CHROMATIC ABERRATION SIMULATION — subtle color fringe at edges
+  // Create a thin colored border overlay
+  const chromaGfx = scene.add.graphics().setScrollFactor(0).setDepth(44).setAlpha(0.15);
+  // Red fringe on left
+  chromaGfx.fillStyle(0xff0000, 0.3);
+  chromaGfx.fillRect(0, 0, 3, GH);
+  // Blue fringe on right
+  chromaGfx.fillStyle(0x0000ff, 0.3);
+  chromaGfx.fillRect(GW - 3, 0, 3, GH);
+  // Subtle gradient fringe
+  for (let i = 0; i < 8; i++) {
+    const a = 0.02 * (8 - i) / 8;
+    chromaGfx.fillStyle(0xff0000, a);
+    chromaGfx.fillRect(i, 0, 1, GH);
+    chromaGfx.fillStyle(0x0000ff, a);
+    chromaGfx.fillRect(GW - 1 - i, 0, 1, GH);
   }
 }

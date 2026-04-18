@@ -27,7 +27,7 @@ class GameScene extends Phaser.Scene {
   create() {
     this.physics.world.setBounds(0, 0, WORLD_W, WORLD_H);
 
-    // Background — use new layered arena background
+    // Background — neon cyberpunk arena
     drawArenaBackground(this);
 
     // Hoop
@@ -48,7 +48,7 @@ class GameScene extends Phaser.Scene {
     this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
 
     // Apply post-processing effects
-    applyPostFX(this);
+    try { applyPostFX(this); } catch(e) { console.warn('PostFX skipped:', e); }
 
     // Collisions (solid)
     this.physics.add.collider(this.player, this.enemies, this._onPlayerTouchEnemy, null, this);

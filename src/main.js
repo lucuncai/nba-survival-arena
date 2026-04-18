@@ -10,7 +10,7 @@ async function launchGame() {
     width: GW,
     height: GH,
     parent: 'game-container',
-    backgroundColor: '#1a1a2e',
+    backgroundColor: '#2a2520',
     scale: {
       mode: Phaser.Scale.FIT,
       autoCenter: Phaser.Scale.CENTER_BOTH,

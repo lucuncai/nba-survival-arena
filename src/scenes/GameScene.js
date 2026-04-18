@@ -27,7 +27,7 @@ class GameScene extends Phaser.Scene {
   create() {
     this.physics.world.setBounds(0, 0, WORLD_W, WORLD_H);
 
-    // Background — neon cyberpunk arena
+    // Background — street basketball arena
     drawArenaBackground(this);
 
     // Hoop

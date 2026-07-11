@@ -39,8 +39,8 @@ export class GameScene extends Phaser.Scene {
   private hoopGlow!: Phaser.GameObjects.Image;
   private cleanup: Array<() => void> = [];
 
-  private hoopHp = HOOP.maxHp;
-  private hoopMaxHp = HOOP.maxHp;
+  private hoopHp: number = HOOP.maxHp;
+  private hoopMaxHp: number = HOOP.maxHp;
   private elapsedSeconds = 0;
   private score = 0;
   private kills = 0;
@@ -125,7 +125,7 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  update(_time: number, rawDelta: number): void {
+  override update(_time: number, rawDelta: number): void {
     if (this.ended) return;
     if (Phaser.Input.Keyboard.JustDown(this.controls.pause)) this.togglePause();
     if (this.paused) return;
@@ -182,6 +182,7 @@ export class GameScene extends Phaser.Scene {
     this.upgradePending = false;
     this.ended = false;
     this.pointerAttacking = false;
+    this.usePointerAim = false;
     this.threatVisible = false;
     this.mobileMove = { x: 0, y: 0 };
     this.movementLocked = false;
@@ -339,6 +340,7 @@ export class GameScene extends Phaser.Scene {
       eventBus.on("ui:resume", () => this.resumeFromPause()),
       eventBus.on("ui:quit", () => this.returnToMenu()),
       eventBus.on("ui:tutorial-close", () => {
+        eventBus.emit("game:screen", { name: "tutorial", visible: false });
         if (!this.ended && this.paused && !this.upgradePending) {
           this.paused = false;
           this.physics.resume();
@@ -483,7 +485,6 @@ export class GameScene extends Phaser.Scene {
     const angle = this.player.aimAngle;
     this.effects.swat(this.player.x, this.player.y, angle, range, COLORS.cyan);
     this.effects.shockwave(this.player.x, this.player.y, range * 0.58, COLORS.cyan);
-    audio.skill();
 
     this.enemies.getChildren().forEach((object) => {
       const enemy = object as EnemyEntity;
@@ -507,7 +508,6 @@ export class GameScene extends Phaser.Scene {
     this.player.invulnerableSeconds = Math.max(this.player.invulnerableSeconds, 0.45);
     this.dashHits.clear();
     this.effects.shockwave(this.player.x, this.player.y, 80, COLORS.gold);
-    audio.skill();
   }
 
   private doCourtQuake(): void {
@@ -517,7 +517,6 @@ export class GameScene extends Phaser.Scene {
     if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       this.cameras.main.shake(320, 0.014);
     }
-    audio.skill();
 
     this.enemies.getChildren().forEach((object) => {
       const enemy = object as EnemyEntity;

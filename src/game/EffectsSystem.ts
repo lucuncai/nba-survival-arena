@@ -6,7 +6,7 @@ export class EffectsSystem {
 
   constructor(private readonly scene: Phaser.Scene) {}
 
-  swat(x: number, y: number, angle: number, range: number, color = COLORS.gold): void {
+  swat(x: number, y: number, angle: number, range: number, color: number = COLORS.gold): void {
     const arc = this.scene.add.graphics().setDepth(30);
     arc.fillStyle(color, 0.25);
     arc.lineStyle(5, color, 0.9);
@@ -25,7 +25,7 @@ export class EffectsSystem {
     this.ring(x, y, color, 0.35, range / 30, 240);
   }
 
-  hit(x: number, y: number, color = COLORS.orange, strong = false): void {
+  hit(x: number, y: number, color: number = COLORS.orange, strong = false): void {
     const count = this.reducedMotion ? 3 : strong ? 12 : 7;
     for (let index = 0; index < count; index += 1) {
       const angle = Math.random() * Math.PI * 2;
@@ -71,7 +71,7 @@ export class EffectsSystem {
     });
   }
 
-  shockwave(x: number, y: number, radius: number, color = COLORS.orange): void {
+  shockwave(x: number, y: number, radius: number, color: number = COLORS.orange): void {
     this.ring(x, y, color, 0.8, radius / 28, 430);
     const flash = this.scene.add
       .image(x, y, "fx-glow")

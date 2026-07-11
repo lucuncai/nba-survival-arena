@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { eventBus } from "../core/EventBus";
-import { COLORS, WORLD } from "../game/config";
+import { WORLD } from "../game/config";
 import type { EnemyKind } from "../game/types";
 
 export class BootScene extends Phaser.Scene {

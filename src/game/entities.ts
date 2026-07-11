@@ -5,13 +5,13 @@ import type { EnemyDefinition } from "./types";
 type EnemyState = "approach" | "windup" | "recover" | "stunned" | "dead";
 
 export class PlayerEntity extends Phaser.Physics.Arcade.Sprite {
-  hp = PLAYER_BASE.maxHp;
-  maxHp = PLAYER_BASE.maxHp;
-  moveSpeed = PLAYER_BASE.speed;
-  damage = PLAYER_BASE.damage;
-  attackRange = PLAYER_BASE.attackRange;
-  attackArc = PLAYER_BASE.attackArc;
-  attackCooldownTotal = PLAYER_BASE.attackCooldown;
+  hp: number = PLAYER_BASE.maxHp;
+  maxHp: number = PLAYER_BASE.maxHp;
+  moveSpeed: number = PLAYER_BASE.speed;
+  damage: number = PLAYER_BASE.damage;
+  attackRange: number = PLAYER_BASE.attackRange;
+  attackArc: number = PLAYER_BASE.attackArc;
+  attackCooldownTotal: number = PLAYER_BASE.attackCooldown;
   attackCooldown = 0;
   skillCooldownMultiplier = 1;
   damageReduction = 0;
@@ -94,7 +94,7 @@ export class EnemyEntity extends Phaser.Physics.Arcade.Sprite {
   readonly definition: EnemyDefinition;
   readonly maxHp: number;
   hp: number;
-  state: EnemyState = "approach";
+  aiState: EnemyState = "approach";
   windupRemaining = 0;
   recoverRemaining = 0;
   stunRemaining = 0;
@@ -148,7 +148,7 @@ export class EnemyEntity extends Phaser.Physics.Arcade.Sprite {
     slowMultiplier: number,
     onShoot: (enemy: EnemyEntity) => void,
   ): void {
-    if (!this.active || this.state === "dead") return;
+    if (!this.active || this.aiState === "dead") return;
     this.contactCooldown = Math.max(0, this.contactCooldown - deltaSeconds);
     this.knockbackRemaining = Math.max(0, this.knockbackRemaining - deltaSeconds);
     const body = this.body as Phaser.Physics.Arcade.Body;
@@ -156,7 +156,7 @@ export class EnemyEntity extends Phaser.Physics.Arcade.Sprite {
     if (this.stunRemaining > 0) {
       this.stunRemaining = Math.max(0, this.stunRemaining - deltaSeconds);
       body.setVelocity(0, 0);
-      this.state = this.stunRemaining > 0 ? "stunned" : "approach";
+      this.aiState = this.stunRemaining > 0 ? "stunned" : "approach";
       this.telegraph.clear();
       this.setTint(0x8ee7ff);
       this.updateVisuals();
@@ -172,39 +172,39 @@ export class EnemyEntity extends Phaser.Physics.Arcade.Sprite {
     const distance = Phaser.Math.Distance.Between(this.x, this.y, targetX, targetY);
     const angle = Math.atan2(targetY - this.y, targetX - this.x);
 
-    if (this.state === "approach") {
+    if (this.aiState === "approach") {
       if (distance > this.definition.preferredRange) {
         const speed = this.definition.speed * slowMultiplier;
         body.setVelocity(Math.cos(angle) * speed, Math.sin(angle) * speed);
         this.setFlipX(body.velocity.x < 0);
       } else {
-        this.state = "windup";
+        this.aiState = "windup";
         this.windupRemaining =
           this.definition.windupSeconds * (this.isBoss && this.hp < this.maxHp * 0.5 ? 0.72 : 1);
         body.setVelocity(0, 0);
       }
-    } else if (this.state === "windup") {
+    } else if (this.aiState === "windup") {
       body.setVelocity(0, 0);
       this.windupRemaining -= deltaSeconds;
       this.drawTelegraph(targetX, targetY);
       if (this.windupRemaining <= 0) {
         onShoot(this);
-        this.state = "recover";
+        this.aiState = "recover";
         this.recoverRemaining = this.isBoss ? 0.65 : 0.9 + Math.random() * 0.45;
         this.telegraph.clear();
       }
-    } else if (this.state === "recover") {
+    } else if (this.aiState === "recover") {
       this.recoverRemaining -= deltaSeconds;
       const tangent = angle + Math.PI / 2 * (this.x > targetX ? 1 : -1);
       body.setVelocity(Math.cos(tangent) * 38 * slowMultiplier, Math.sin(tangent) * 38 * slowMultiplier);
-      if (this.recoverRemaining <= 0) this.state = "approach";
+      if (this.recoverRemaining <= 0) this.aiState = "approach";
     }
 
     this.updateVisuals();
   }
 
   takeDamage(amount: number, knockbackAngle: number, knockbackForce: number): boolean {
-    if (this.state === "dead") return false;
+    if (this.aiState === "dead") return false;
     this.hp = Math.max(0, this.hp - amount);
     this.updateHealthBar();
 
@@ -213,14 +213,14 @@ export class EnemyEntity extends Phaser.Physics.Arcade.Sprite {
       const force = knockbackForce / Math.max(1, this.definition.mass * 0.7);
       body.setVelocity(Math.cos(knockbackAngle) * force, Math.sin(knockbackAngle) * force);
       this.knockbackRemaining = 0.14;
-      if (this.state === "windup" && this.definition.kind !== "center") {
-        this.state = "approach";
+      if (this.aiState === "windup" && this.definition.kind !== "center") {
+        this.aiState = "approach";
         this.telegraph.clear();
       }
     }
 
     if (this.hp <= 0) {
-      this.state = "dead";
+      this.aiState = "dead";
       return true;
     }
     return false;
@@ -229,7 +229,7 @@ export class EnemyEntity extends Phaser.Physics.Arcade.Sprite {
   stun(seconds: number): void {
     const resistance = this.isBoss ? 0.3 : this.definition.kind === "center" ? 0.55 : 1;
     this.stunRemaining = Math.max(this.stunRemaining, seconds * resistance);
-    this.state = "stunned";
+    this.aiState = "stunned";
     this.telegraph.clear();
   }
 
@@ -262,7 +262,7 @@ export class EnemyEntity extends Phaser.Physics.Arcade.Sprite {
     this.hpBack.setVisible(damaged || this.isBoss);
     this.hpFill.setVisible(damaged || this.isBoss);
 
-    if (this.state !== "windup") {
+    if (this.aiState !== "windup") {
       this.setScale(this.isBoss ? 1.06 : this.definition.kind === "center" ? 0.94 : 0.78);
     }
   }
@@ -291,7 +291,7 @@ export class EnemyShot {
   private readonly arc: Phaser.GameObjects.Graphics;
 
   constructor(
-    private readonly scene: Phaser.Scene,
+    scene: Phaser.Scene,
     x: number,
     y: number,
     targetX: number,

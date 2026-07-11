@@ -1,4 +1,4 @@
-import { SeededRandom } from "../core/SeededRandom";
+import type { SeededRandom } from "../core/SeededRandom";
 import { WAVES } from "./data";
 import type { EnemyKind, WaveDefinition } from "./types";
 

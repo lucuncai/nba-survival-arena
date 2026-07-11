@@ -231,14 +231,15 @@ export class GameUi {
 
     const stats = element("results-stats");
     stats.replaceChildren();
-    [
+    const resultRows: Array<readonly [string, string]> = [
       [result.score.toLocaleString(), "SCORE"],
       [this.formatTime(result.elapsedSeconds), "TIME"],
       [result.kills.toString(), "TAKEDOWNS"],
       [result.blocks.toString(), "BLOCKS"],
       [`${result.maxCombo}x`, "MAX COMBO"],
       [result.wave.toString(), "WAVE"],
-    ].forEach(([value, label]) => {
+    ];
+    resultRows.forEach(([value, label]) => {
       const item = document.createElement("div");
       item.className = "result-stat";
       const valueNode = document.createElement("b");

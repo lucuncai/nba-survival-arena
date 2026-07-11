@@ -32,11 +32,27 @@ export class GameUi {
   private joystickPointer: number | undefined;
 
   constructor() {
+    this.preventBrowserGestures();
     this.bindMenu();
     this.bindAbilities();
     this.bindJoystick();
     this.bindGameEvents();
     this.renderBestRun();
+  }
+
+  private preventBrowserGestures(): void {
+    const shell = element("game-shell");
+    const prevent = (event: Event): void => event.preventDefault();
+    ["gesturestart", "gesturechange", "gestureend", "dblclick"].forEach((eventName) => {
+      shell.addEventListener(eventName, prevent, { passive: false });
+    });
+    shell.addEventListener(
+      "touchmove",
+      (event) => {
+        if (event.touches.length > 1) event.preventDefault();
+      },
+      { passive: false },
+    );
   }
 
   private bindMenu(): void {

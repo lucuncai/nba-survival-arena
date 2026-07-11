@@ -8,6 +8,11 @@ test("boots into a playable first wave without browser errors", async ({ page })
   await expect(page).toHaveTitle(/Street Legends/);
   await expect(page.locator("#menu-screen")).toHaveClass(/screen-visible/, { timeout: 15_000 });
   await expect(page.locator("#game-container canvas")).toBeVisible();
+  await expect(page.locator('meta[name="viewport"]')).toHaveAttribute("content", /user-scalable=no/);
+  expect(await page.locator("#game-shell").evaluate((node) => getComputedStyle(node).touchAction)).toBe("none");
+  expect(await page.locator('[data-action="skill1"]').evaluate((node) => getComputedStyle(node).touchAction)).toBe(
+    "none",
+  );
 
   await page.getByRole("button", { name: "ENTER THE COURT" }).click();
   await expect(page.locator("#tutorial-screen")).toHaveClass(/screen-visible/);

@@ -17,6 +17,7 @@
 
 * {
   box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
 }
 
 html,
@@ -30,12 +31,30 @@ body,
 }
 
 body {
+  position: fixed;
+  inset: 0;
   overscroll-behavior: none;
   touch-action: none;
 }
 
 button {
   font: inherit;
+}
+
+#game-shell,
+#game-shell *,
+#game-container,
+#game-container canvas {
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+@supports (height: 100svh) {
+  html,
+  body {
+    height: 100svh;
+  }
 }
 
 .ambient {

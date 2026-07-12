@@ -1,0 +1,226 @@
+import type {
+  EnemyDefinition,
+  EnemyKind,
+  UpgradeDefinition,
+  UpgradeId,
+  WaveDefinition,
+} from "./types";
+
+export const ENEMIES: Readonly<Record<EnemyKind, EnemyDefinition>> = {
+  rookie: {
+    kind: "rookie",
+    name: "CUTTER",
+    maxHp: 70,
+    speed: 122,
+    touchDamage: 14,
+    radius: 23,
+    preferredRange: 126,
+    windupSeconds: 0.7,
+    shotSpeed: 420,
+    shotDamage: 4,
+    accuracy: 0.86,
+    score: 70,
+    color: 0xff8a3d,
+    mass: 1,
+  },
+  shooter: {
+    kind: "shooter",
+    name: "PULL-UP",
+    maxHp: 92,
+    speed: 98,
+    touchDamage: 12,
+    radius: 24,
+    preferredRange: 310,
+    windupSeconds: 1.05,
+    shotSpeed: 350,
+    shotDamage: 7,
+    accuracy: 0.76,
+    score: 110,
+    color: 0x48d8ff,
+    mass: 1.2,
+  },
+  sniper: {
+    kind: "sniper",
+    name: "DEEP THREAT",
+    maxHp: 68,
+    speed: 82,
+    touchDamage: 10,
+    radius: 21,
+    preferredRange: 520,
+    windupSeconds: 1.45,
+    shotSpeed: 290,
+    shotDamage: 10,
+    accuracy: 0.68,
+    score: 160,
+    color: 0xd88cff,
+    mass: 0.9,
+  },
+  center: {
+    kind: "center",
+    name: "ENFORCER",
+    maxHp: 260,
+    speed: 66,
+    touchDamage: 24,
+    radius: 34,
+    preferredRange: 92,
+    windupSeconds: 0.9,
+    shotSpeed: 500,
+    shotDamage: 13,
+    accuracy: 1,
+    score: 250,
+    color: 0xff3b55,
+    mass: 4.5,
+  },
+  boss: {
+    kind: "boss",
+    name: "THE COMMISSIONER",
+    maxHp: 2_400,
+    speed: 78,
+    touchDamage: 32,
+    radius: 52,
+    preferredRange: 250,
+    windupSeconds: 1.15,
+    shotSpeed: 370,
+    shotDamage: 15,
+    accuracy: 0.92,
+    score: 2_500,
+    color: 0xff2f4d,
+    mass: 8,
+  },
+};
+
+export const WAVES: readonly WaveDefinition[] = [
+  {
+    number: 1,
+    title: "WARM-UP",
+    durationSeconds: 24,
+    spawnIntervalSeconds: 1.65,
+    roster: [{ kind: "rookie", weight: 1 }],
+    maxAlive: 7,
+  },
+  {
+    number: 2,
+    title: "THE PULL-UP",
+    durationSeconds: 30,
+    spawnIntervalSeconds: 1.35,
+    roster: [
+      { kind: "rookie", weight: 0.65 },
+      { kind: "shooter", weight: 0.35 },
+    ],
+    maxAlive: 9,
+  },
+  {
+    number: 3,
+    title: "FROM THE LOGO",
+    durationSeconds: 34,
+    spawnIntervalSeconds: 1.12,
+    roster: [
+      { kind: "rookie", weight: 0.42 },
+      { kind: "shooter", weight: 0.38 },
+      { kind: "sniper", weight: 0.2 },
+    ],
+    maxAlive: 11,
+  },
+  {
+    number: 4,
+    title: "OWN THE PAINT",
+    durationSeconds: 38,
+    spawnIntervalSeconds: 0.92,
+    roster: [
+      { kind: "rookie", weight: 0.32 },
+      { kind: "shooter", weight: 0.3 },
+      { kind: "sniper", weight: 0.2 },
+      { kind: "center", weight: 0.18 },
+    ],
+    maxAlive: 13,
+  },
+  {
+    number: 5,
+    title: "FINAL POSSESSION",
+    durationSeconds: 999,
+    spawnIntervalSeconds: 2.1,
+    roster: [
+      { kind: "rookie", weight: 0.42 },
+      { kind: "shooter", weight: 0.34 },
+      { kind: "sniper", weight: 0.24 },
+    ],
+    maxAlive: 9,
+    boss: "boss",
+  },
+] as const;
+
+export const UPGRADES: readonly UpgradeDefinition[] = [
+  {
+    id: "heavy-hands",
+    name: "HEAVY HANDS",
+    category: "POWER",
+    description: "+24% swat and skill damage.",
+    icon: "✦",
+  },
+  {
+    id: "quick-release",
+    name: "QUICK RELEASE",
+    category: "MOMENTUM",
+    description: "Swat 18% faster and recover skills 10% sooner.",
+    icon: "ϟ",
+  },
+  {
+    id: "iron-lungs",
+    name: "IRON LUNGS",
+    category: "DEFENSE",
+    description: "+70 maximum health and heal the same amount.",
+    icon: "♥",
+  },
+  {
+    id: "rim-armor",
+    name: "RIM ARMOR",
+    category: "DEFENSE",
+    description: "Repair 24 integrity and increase the rim's maximum by 10.",
+    icon: "⬡",
+  },
+  {
+    id: "wide-swat",
+    name: "WIDE SWAT",
+    category: "DEFENSE",
+    description: "+22% attack reach and a wider block angle.",
+    icon: "◖",
+  },
+  {
+    id: "second-jump",
+    name: "SECOND JUMP",
+    category: "MOMENTUM",
+    description: "Every block heals 6 health and grants extra Hype.",
+    icon: "↟",
+  },
+  {
+    id: "crowd-favorite",
+    name: "CROWD FAVORITE",
+    category: "MOMENTUM",
+    description: "Combos last longer and score 35% more.",
+    icon: "♛",
+  },
+  {
+    id: "paint-beast",
+    name: "PAINT BEAST",
+    category: "POWER",
+    description: "Court Quake grows 30% and stuns longer.",
+    icon: "◎",
+  },
+  {
+    id: "fast-break",
+    name: "FAST BREAK",
+    category: "POWER",
+    description: "+14% movement speed; Power Drive travels farther.",
+    icon: "➜",
+  },
+] as const;
+
+export function getEnemyDefinition(kind: EnemyKind): EnemyDefinition {
+  return ENEMIES[kind];
+}
+
+export function getUpgrade(id: UpgradeId): UpgradeDefinition {
+  const upgrade = UPGRADES.find((candidate) => candidate.id === id);
+  if (!upgrade) throw new Error(`Unknown upgrade: ${id}`);
+  return upgrade;
+}

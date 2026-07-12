@@ -1,11 +1,23 @@
 # Build artifacts
 index_v2.html
 index_backup_*.html
+dist/
+node_modules/
+coverage/
+playwright-report/
+test-results/
+*.tsbuildinfo
+.vite/
 
 # Debug and test notes
 debug_*.txt
 debug_*.md
 test_*.txt
+
+# Local environment
+.env
+.env.local
+.DS_Store
 
 # Legacy files (kept for reference but not tracked)
 game_code.js

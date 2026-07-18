@@ -41,6 +41,7 @@
                   <span>ENTER THE COURT</span><b>→</b>
                 </button>
                 <button id="start-endless" class="ghost-button" type="button">ENDLESS RUN</button>
+                <button id="open-select" class="ghost-button" type="button">SELECT LEGEND</button>
                 <button id="open-locker" class="ghost-button" type="button">LOCKER ROOM</button>
                 <button id="how-to-play" class="ghost-button" type="button">HOW TO PLAY</button>
               </div>
@@ -50,21 +51,19 @@
 
             <article class="legend-card" aria-label="Selected legend">
               <div class="card-noise"></div>
-              <div class="legend-number">23</div>
+              <div class="legend-number" id="legend-number">23</div>
               <div class="legend-portrait" aria-hidden="true">
-                <span class="portrait-crown">♛</span>
-                <span class="portrait-head"></span>
-                <span class="portrait-body">23</span>
+                <img id="legend-portrait-img" alt="" />
               </div>
               <div class="legend-meta">
-                <span>PAINT GUARDIAN</span>
-                <h2>THE KING</h2>
-                <p>Power through traffic and erase shots at the rim.</p>
+                <span id="legend-title">PAINT GUARDIAN</span>
+                <h2 id="legend-name">THE KING</h2>
+                <p id="legend-desc">Power through traffic and erase shots at the rim.</p>
               </div>
               <div class="stat-row">
-                <span><b>95</b> POWER</span>
-                <span><b>88</b> DEFENSE</span>
-                <span><b>78</b> SPEED</span>
+                <span><b id="legend-power">78</b> POWER</span>
+                <span><b id="legend-defense">80</b> DEFENSE</span>
+                <span><b id="legend-speed">84</b> SPEED</span>
               </div>
             </article>
           </div>
@@ -87,7 +86,7 @@
         <section id="hud" aria-label="Game status">
           <div class="hud-top">
             <div class="hud-cluster player-cluster">
-              <div class="hud-label"><span>THE KING</span><b id="level-label">LV. 1</b></div>
+              <div class="hud-label"><span id="hud-player-name">THE KING</span><b id="level-label">LV. 1</b></div>
               <div class="meter meter-health"><div id="player-health"></div></div>
               <div class="meter-caption"><span id="player-health-copy">320 / 320</span><b>HEALTH</b></div>
             </div>
@@ -155,6 +154,18 @@
           <div id="locker-cards" class="upgrade-cards"></div>
           <div class="menu-actions">
             <button id="close-locker" class="primary-button" type="button">BACK TO MENU</button>
+          </div>
+        </section>
+
+        <section id="select-screen" class="screen" aria-labelledby="select-title">
+          <div class="upgrade-heading">
+            <div class="eyebrow">CHOOSE YOUR LEGEND</div>
+            <h2 id="select-title">PICK A BALLER</h2>
+            <p id="select-cred">STREET CRED: 0</p>
+          </div>
+          <div id="select-cards" class="select-cards"></div>
+          <div class="menu-actions">
+            <button id="close-select" class="primary-button" type="button">BACK TO MENU</button>
           </div>
         </section>
 

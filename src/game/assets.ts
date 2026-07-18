@@ -36,6 +36,8 @@ export const ASSET_MANIFEST: AssetManifest = {
   images: [
     { key: "court", url: assetUrl("court.jpg") },
     { key: "hero-king", url: assetUrl("hero-king.png") },
+    { key: "hero-mamba", url: assetUrl("hero-mamba.png") },
+    { key: "hero-chef", url: assetUrl("hero-chef.png") },
     { key: "enemy-rookie", url: assetUrl("enemy-rookie.png") },
     { key: "enemy-shooter", url: assetUrl("enemy-shooter.png") },
     { key: "enemy-sniper", url: assetUrl("enemy-sniper.png") },

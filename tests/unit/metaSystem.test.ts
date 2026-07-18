@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { getPermanentUpgrade } from "../../src/game/data";
+import { getCharacter, getPermanentUpgrade } from "../../src/game/data";
 import {
   computePermanentBonuses,
   computeRunCred,
   nextPermanentCost,
   purchasePermanent,
+  unlockCharacter,
 } from "../../src/game/MetaSystem";
 import type { MetaProfile } from "../../src/game/types";
 
@@ -79,5 +80,20 @@ describe("permanent purchase", () => {
     expect(result.purchased).toBe(false);
     expect(result.profile).toBe(start);
     expect(start.permanentUpgrades["training-camp"]).toBeUndefined();
+  });
+});
+
+describe("unlockCharacter", () => {
+  it("unlocks when affordable and deducts cred", () => {
+    const result = unlockCharacter(profile({ streetCred: 500 }), getCharacter("mamba"));
+    expect(result.purchased).toBe(true);
+    expect(result.profile.streetCred).toBe(100);
+    expect(result.profile.unlockedCharacters).toContain("mamba");
+  });
+
+  it("refuses when too expensive or already owned", () => {
+    expect(unlockCharacter(profile({ streetCred: 50 }), getCharacter("mamba")).purchased).toBe(false);
+    const owned = profile({ streetCred: 999, unlockedCharacters: ["king", "mamba"] });
+    expect(unlockCharacter(owned, getCharacter("mamba")).purchased).toBe(false);
   });
 });

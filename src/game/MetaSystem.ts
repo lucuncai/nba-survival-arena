@@ -1,4 +1,5 @@
 import type {
+  CharacterDefinition,
   MetaProfile,
   PermanentBonuses,
   PermanentUpgradeDefinition,
@@ -76,6 +77,21 @@ export function purchasePermanent(
       ...profile,
       streetCred: profile.streetCred - cost,
       permanentUpgrades: { ...profile.permanentUpgrades, [definition.id]: currentLevel + 1 },
+    },
+  };
+}
+
+/** Attempt to unlock a character with Street Cred. Never mutates the input. */
+export function unlockCharacter(profile: MetaProfile, definition: CharacterDefinition): PurchaseResult {
+  if (profile.unlockedCharacters.includes(definition.id) || profile.streetCred < definition.unlockCost) {
+    return { profile, purchased: false };
+  }
+  return {
+    purchased: true,
+    profile: {
+      ...profile,
+      streetCred: profile.streetCred - definition.unlockCost,
+      unlockedCharacters: [...profile.unlockedCharacters, definition.id],
     },
   };
 }

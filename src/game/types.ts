@@ -7,7 +7,8 @@ export type ScreenName =
   | "upgrade"
   | "pause"
   | "results"
-  | "locker";
+  | "locker"
+  | "select";
 
 export type GameMode = "campaign" | "endless";
 
@@ -40,9 +41,21 @@ export type UpgradeCategory = "POWER" | "DEFENSE" | "MOMENTUM";
 
 export type UpgradeRarity = "common" | "rare" | "epic";
 
-export type CharacterId = "king";
+export type CharacterId = "king" | "mamba" | "chef";
 
-export type SkillId = "chasedown-block" | "power-drive" | "court-quake" | "kings-court";
+export type SkillId =
+  | "chasedown-block"
+  | "power-drive"
+  | "court-quake"
+  | "kings-court"
+  | "fadeaway"
+  | "viper-strike"
+  | "lockdown"
+  | "mamba-mentality"
+  | "splash-bomb"
+  | "crossover-storm"
+  | "pick-roll"
+  | "night-night";
 
 export interface CooldownSnapshot {
   remaining: number;
@@ -248,6 +261,10 @@ export interface GameEvents {
   "game:screen": { name: ScreenName; visible: boolean };
   "game:hud-visible": boolean;
   "game:hud": HudSnapshot;
+  "game:loadout": {
+    character: string;
+    abilities: Array<{ action: "skill1" | "skill2" | "skill3" | "ultimate"; name: string; icon: string }>;
+  };
   "game:threat": { visible: boolean; copy?: string };
   "game:upgrade-choice": ChoiceOffer[];
   "game:results": RunResult;

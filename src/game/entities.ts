@@ -23,7 +23,12 @@ export class PlayerEntity extends Phaser.Physics.Arcade.Sprite {
   critChance = 0.12;
   critMultiplier = 1.65;
   invulnerableSeconds = 0;
-  kingModeSeconds = 0;
+  empowerSeconds = 0;
+  empowerDamageMult = 1.5;
+  empowerSpeedMult = 1.14;
+  empowerDamageReduction = 0.5;
+  empowerEnemySlow = 0.52;
+  empowerShotSlow = 0.55;
   aimAngle = 0;
   level = 1;
 
@@ -68,13 +73,13 @@ export class PlayerEntity extends Phaser.Physics.Arcade.Sprite {
   tick(deltaSeconds: number, movementLocked: boolean): void {
     this.attackCooldown = Math.max(0, this.attackCooldown - deltaSeconds);
     this.invulnerableSeconds = Math.max(0, this.invulnerableSeconds - deltaSeconds);
-    this.kingModeSeconds = Math.max(0, this.kingModeSeconds - deltaSeconds);
+    this.empowerSeconds = Math.max(0, this.empowerSeconds - deltaSeconds);
 
     const body = this.body as Phaser.Physics.Arcade.Body;
     if (!movementLocked) {
       const magnitude = Math.hypot(this.moveX, this.moveY);
       if (magnitude > 0.08) {
-        const speed = this.moveSpeed * (this.kingModeSeconds > 0 ? 1.14 : 1);
+        const speed = this.moveSpeed * (this.empowerSeconds > 0 ? this.empowerSpeedMult : 1);
         body.setVelocity((this.moveX / magnitude) * speed, (this.moveY / magnitude) * speed);
         this.setRotation(Math.sin(this.scene.time.now * 0.014) * 0.025);
       } else {
@@ -92,8 +97,8 @@ export class PlayerEntity extends Phaser.Physics.Arcade.Sprite {
 
   receiveDamage(amount: number): boolean {
     if (this.invulnerableSeconds > 0) return false;
-    const kingReduction = this.kingModeSeconds > 0 ? 0.5 : 0;
-    this.hp = Math.max(0, this.hp - amount * (1 - Math.max(this.damageReduction, kingReduction)));
+    const empowerReduction = this.empowerSeconds > 0 ? this.empowerDamageReduction : 0;
+    this.hp = Math.max(0, this.hp - amount * (1 - Math.max(this.damageReduction, empowerReduction)));
     this.invulnerableSeconds = 0.48;
     return true;
   }

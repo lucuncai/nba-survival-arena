@@ -1,11 +1,28 @@
 import { describe, expect, it } from "vitest";
 import { PLAYER_BASE } from "../../src/game/config";
-import { CHARACTERS, DEFAULT_CHARACTER_ID, SKILL_IDS, getCharacter } from "../../src/game/data";
+import {
+  CHARACTERS,
+  DEFAULT_CHARACTER_ID,
+  SKILL_IDS,
+  SKILL_META,
+  getCharacter,
+} from "../../src/game/data";
 
 describe("characters", () => {
   it("exposes a valid default character", () => {
     expect(CHARACTERS[DEFAULT_CHARACTER_ID]).toBeDefined();
     expect(getCharacter(DEFAULT_CHARACTER_ID).id).toBe(DEFAULT_CHARACTER_ID);
+  });
+
+  it("includes the three playable legends", () => {
+    expect(Object.keys(CHARACTERS).sort()).toEqual(["chef", "king", "mamba"]);
+  });
+
+  it("has display metadata for every skill", () => {
+    SKILL_IDS.forEach((id) => {
+      expect(SKILL_META[id]).toBeDefined();
+      expect(SKILL_META[id].name.length).toBeGreaterThan(0);
+    });
   });
 
   it("only references known skills in every loadout", () => {

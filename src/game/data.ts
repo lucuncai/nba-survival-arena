@@ -558,6 +558,14 @@ export const SKILL_IDS: readonly SkillId[] = [
   "power-drive",
   "court-quake",
   "kings-court",
+  "fadeaway",
+  "viper-strike",
+  "lockdown",
+  "mamba-mentality",
+  "splash-bomb",
+  "crossover-storm",
+  "pick-roll",
+  "night-night",
 ] as const;
 
 export const CHARACTERS: Readonly<Record<CharacterId, CharacterDefinition>> = {
@@ -585,9 +593,72 @@ export const CHARACTERS: Readonly<Record<CharacterId, CharacterDefinition>> = {
       ultimate: "kings-court",
     },
   },
+  mamba: {
+    id: "mamba",
+    name: "THE MAMBA",
+    title: "PERIMETER ASSASSIN",
+    description: "Blink through traffic and delete shooters with lethal bursts.",
+    jerseyNumber: "24",
+    textureKey: "hero-mamba",
+    color: COLORS.purple,
+    unlockCost: 400,
+    stats: {
+      maxHp: 260,
+      moveSpeed: 322,
+      damage: 42,
+      attackRange: 150,
+      attackArc: Math.PI * 0.62,
+      attackCooldown: 0.4,
+    },
+    skills: {
+      skill1: "fadeaway",
+      skill2: "viper-strike",
+      skill3: "lockdown",
+      ultimate: "mamba-mentality",
+    },
+  },
+  chef: {
+    id: "chef",
+    name: "THE CHEF",
+    title: "SPACE CONTROLLER",
+    description: "Own the floor with wide range, splash bombs, and screens.",
+    jerseyNumber: "30",
+    textureKey: "hero-chef",
+    color: COLORS.cyan,
+    unlockCost: 400,
+    stats: {
+      maxHp: 280,
+      moveSpeed: 300,
+      damage: 30,
+      attackRange: 180,
+      attackArc: Math.PI * 0.85,
+      attackCooldown: 0.44,
+    },
+    skills: {
+      skill1: "splash-bomb",
+      skill2: "crossover-storm",
+      skill3: "pick-roll",
+      ultimate: "night-night",
+    },
+  },
 };
 
 export const DEFAULT_CHARACTER_ID: CharacterId = "king";
+
+export const SKILL_META: Readonly<Record<SkillId, { name: string; icon: string }>> = {
+  "chasedown-block": { name: "CHASEDOWN", icon: "◖" },
+  "power-drive": { name: "POWER DRIVE", icon: "➜" },
+  "court-quake": { name: "COURT QUAKE", icon: "◎" },
+  "kings-court": { name: "KING'S COURT", icon: "♛" },
+  fadeaway: { name: "FADEAWAY", icon: "↺" },
+  "viper-strike": { name: "VIPER STRIKE", icon: "➤" },
+  lockdown: { name: "LOCKDOWN", icon: "⊗" },
+  "mamba-mentality": { name: "MAMBA MODE", icon: "✷" },
+  "splash-bomb": { name: "SPLASH BOMB", icon: "✸" },
+  "crossover-storm": { name: "CROSSOVER", icon: "✺" },
+  "pick-roll": { name: "SET SCREEN", icon: "▤" },
+  "night-night": { name: "NIGHT NIGHT", icon: "☾" },
+};
 
 export function getEnemyDefinition(kind: EnemyKind): EnemyDefinition {
   return ENEMIES[kind];

@@ -7,6 +7,7 @@ import { COLORS, HOOP, PLAYER_BASE, VIEWPORT, WORLD } from "../game/config";
 import {
   EVOLUTIONS,
   EVOLUTION_EFFECTS,
+  SKILL_META,
   UPGRADES,
   UPGRADE_EFFECTS,
   getCharacter,
@@ -91,6 +92,13 @@ export class GameScene extends Phaser.Scene {
   private credMultiplier = 1;
   private readonly upgradeRanks = new Map<UpgradeId, number>();
   private readonly evolutionsTaken = new Set<EvolutionId>();
+  private screenZones: Array<{
+    x: number;
+    y: number;
+    radius: number;
+    remaining: number;
+    graphic: Phaser.GameObjects.Graphics;
+  }> = [];
 
   private readonly cooldowns: Record<SkillName, number> = {
     skill1: 0,
@@ -128,7 +136,15 @@ export class GameScene extends Phaser.Scene {
       "chasedown-block": () => this.doChasedownBlock(),
       "power-drive": () => this.doPowerDrive(),
       "court-quake": () => this.doCourtQuake(),
-      "kings-court": () => this.doUltimate(),
+      "kings-court": () => this.doKingsCourt(),
+      fadeaway: () => this.doFadeaway(),
+      "viper-strike": () => this.doViperStrike(),
+      lockdown: () => this.doLockdown(),
+      "mamba-mentality": () => this.doMambaMentality(),
+      "splash-bomb": () => this.doSplashBomb(),
+      "crossover-storm": () => this.doCrossoverStorm(),
+      "pick-roll": () => this.doPickRoll(),
+      "night-night": () => this.doNightNight(),
     };
 
     this.drawArena();
@@ -159,6 +175,7 @@ export class GameScene extends Phaser.Scene {
     eventBus.emit("game:screen", { name: "upgrade", visible: false });
     eventBus.emit("game:screen", { name: "pause", visible: false });
     eventBus.emit("game:hud-visible", true);
+    this.emitLoadout();
     this.startNextWave();
 
     if (!saveStore.load().tutorialSeen) {
@@ -187,7 +204,7 @@ export class GameScene extends Phaser.Scene {
     if (Phaser.Input.Keyboard.JustDown(this.controls.skill3)) this.performAction("skill3", false);
     if (Phaser.Input.Keyboard.JustDown(this.controls.ultimate)) this.performAction("ultimate", false);
 
-    const enemySlow = this.player.kingModeSeconds > 0 ? 0.52 : 1;
+    const enemySlow = this.player.empowerSeconds > 0 ? this.player.empowerEnemySlow : 1;
     this.enemies.getChildren().forEach((object) => {
       const enemy = object as EnemyEntity;
       enemy.updateAi(deltaSeconds, WORLD.centerX, WORLD.centerY, enemySlow, (shooter) =>
@@ -196,6 +213,7 @@ export class GameScene extends Phaser.Scene {
     });
 
     this.updateShots(deltaSeconds);
+    this.updateScreenZones(deltaSeconds);
     this.updateWave(deltaSeconds);
     this.updateThreat();
 
@@ -234,6 +252,8 @@ export class GameScene extends Phaser.Scene {
     this.credMultiplier = 1;
     this.upgradeRanks.clear();
     this.evolutionsTaken.clear();
+    this.screenZones.forEach((zone) => zone.graphic.destroy());
+    this.screenZones = [];
     Object.keys(this.cooldowns).forEach((key) => {
       this.cooldowns[key as SkillName] = 0;
     });
@@ -494,7 +514,7 @@ export class GameScene extends Phaser.Scene {
     if (!this.player.startAttack()) return;
     const range = this.player.attackRange;
     const angle = this.player.aimAngle;
-    const damage = this.player.damage * (this.player.kingModeSeconds > 0 ? 1.5 : 1);
+    const damage = this.player.damage * (this.player.empowerSeconds > 0 ? this.player.empowerDamageMult : 1);
     this.effects.swat(this.player.x, this.player.y, angle, range);
     audio.swat();
 
@@ -574,18 +594,34 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
-  private doUltimate(): void {
-    if (this.hype < PLAYER_BASE.maxHype || this.player.kingModeSeconds > 0) return;
+  private activateEmpower(config: {
+    seconds: number;
+    damageMult: number;
+    speedMult: number;
+    damageReduction: number;
+    enemySlow: number;
+    shotSlow: number;
+    title: string;
+    subtitle: string;
+    color: number;
+    colorHex: string;
+  }): void {
+    if (this.hype < PLAYER_BASE.maxHype || this.player.empowerSeconds > 0) return;
     this.hype = 0;
-    this.player.kingModeSeconds = 8;
-    this.cooldowns.ultimate = 8;
-    this.effects.shockwave(this.player.x, this.player.y, 480, COLORS.gold);
-    this.effects.announce("KING'S COURT", "THE PAINT BELONGS TO YOU", "#ffc43d");
+    this.player.empowerSeconds = config.seconds;
+    this.player.empowerDamageMult = config.damageMult;
+    this.player.empowerSpeedMult = config.speedMult;
+    this.player.empowerDamageReduction = config.damageReduction;
+    this.player.empowerEnemySlow = config.enemySlow;
+    this.player.empowerShotSlow = config.shotSlow;
+    this.cooldowns.ultimate = config.seconds;
+    this.effects.shockwave(this.player.x, this.player.y, 480, config.color);
+    this.effects.announce(config.title, config.subtitle, config.colorHex);
     audio.ultimate();
 
     const aura = this.add
       .image(this.player.x, this.player.y, "fx-ring")
-      .setTint(COLORS.gold)
+      .setTint(config.color)
       .setAlpha(0.42)
       .setScale(7)
       .setBlendMode(Phaser.BlendModes.ADD)
@@ -594,13 +630,178 @@ export class GameScene extends Phaser.Scene {
       delay: 40,
       loop: true,
       callback: () => {
-        if (!this.player.active || this.player.kingModeSeconds <= 0 || this.ended) {
+        if (!this.player.active || this.player.empowerSeconds <= 0 || this.ended) {
           aura.destroy();
           timer.remove();
           return;
         }
         aura.setPosition(this.player.x, this.player.y).setRotation(aura.rotation + 0.012);
       },
+    });
+  }
+
+  private doKingsCourt(): void {
+    this.activateEmpower({
+      seconds: 8,
+      damageMult: 1.5,
+      speedMult: 1.14,
+      damageReduction: 0.5,
+      enemySlow: 0.52,
+      shotSlow: 0.55,
+      title: "KING'S COURT",
+      subtitle: "THE PAINT BELONGS TO YOU",
+      color: COLORS.gold,
+      colorHex: "#ffc43d",
+    });
+  }
+
+  private doMambaMentality(): void {
+    this.activateEmpower({
+      seconds: 10,
+      damageMult: 2.1,
+      speedMult: 1.5,
+      damageReduction: 0.25,
+      enemySlow: 1,
+      shotSlow: 1,
+      title: "MAMBA MENTALITY",
+      subtitle: "STRIKE FROM EVERYWHERE",
+      color: COLORS.purple,
+      colorHex: "#9b6dff",
+    });
+  }
+
+  private doNightNight(): void {
+    this.activateEmpower({
+      seconds: 6,
+      damageMult: 1.25,
+      speedMult: 1.1,
+      damageReduction: 0.3,
+      enemySlow: 0.2,
+      shotSlow: 0.2,
+      title: "NIGHT NIGHT",
+      subtitle: "TIME SLOWS TO A CRAWL",
+      color: COLORS.cyan,
+      colorHex: "#48d8ff",
+    });
+  }
+
+  private doFadeaway(): void {
+    if (!this.consumeCooldown("skill1")) return;
+    this.dashAngle = this.player.aimAngle + Math.PI;
+    this.dashRemaining = 0.18 * this.player.driveMultiplier;
+    this.movementLocked = true;
+    this.player.invulnerableSeconds = Math.max(this.player.invulnerableSeconds, 0.35);
+    this.dashHits.clear();
+
+    const range = this.player.attackRange * 2.1;
+    const angle = this.player.aimAngle;
+    this.effects.swat(this.player.x, this.player.y, angle, range, COLORS.purple);
+    this.enemies.getChildren().forEach((object) => {
+      const enemy = object as EnemyEntity;
+      if (this.isInCone(enemy.x, enemy.y, range, angle, Math.PI * 0.5)) {
+        this.damageEnemy(enemy, this.player.damage * 1.8, 300, angle, true);
+      }
+    });
+    this.shots.forEach((shot) => {
+      if (shot.active && this.isInCone(shot.x, shot.y, range + 40, angle, Math.PI * 0.55)) {
+        this.blockShot(shot, false);
+      }
+    });
+  }
+
+  private doViperStrike(): void {
+    if (!this.consumeCooldown("skill2") || this.dashRemaining > 0) return;
+    this.dashAngle = this.player.aimAngle;
+    this.dashRemaining = 0.34 * this.player.driveMultiplier;
+    this.movementLocked = true;
+    this.player.invulnerableSeconds = Math.max(this.player.invulnerableSeconds, 0.42);
+    this.dashHits.clear();
+    this.effects.shockwave(this.player.x, this.player.y, 92, COLORS.purple);
+  }
+
+  private doLockdown(): void {
+    if (!this.consumeCooldown("skill3")) return;
+    const targets = this.nearestEnemies(this.player.x, this.player.y, 3, 520);
+    targets.forEach((enemy) => {
+      enemy.stun(3);
+      this.effects.hit(enemy.x, enemy.y - 16, COLORS.purple, true);
+    });
+    this.effects.shockwave(this.player.x, this.player.y, 130, COLORS.purple);
+  }
+
+  private doSplashBomb(): void {
+    if (!this.consumeCooldown("skill1")) return;
+    const distance = 260;
+    const targetX = this.player.x + Math.cos(this.player.aimAngle) * distance;
+    const targetY = this.player.y + Math.sin(this.player.aimAngle) * distance;
+    const radius = 165;
+    this.effects.shockwave(targetX, targetY, radius, COLORS.cyan);
+    this.enemies.getChildren().forEach((object) => {
+      const enemy = object as EnemyEntity;
+      if (Phaser.Math.Distance.Between(targetX, targetY, enemy.x, enemy.y) <= radius) {
+        const angle = Math.atan2(enemy.y - targetY, enemy.x - targetX);
+        this.damageEnemy(enemy, this.player.damage * 2.2, 260, angle, true);
+      }
+    });
+    this.shots.forEach((shot) => {
+      if (shot.active && shot.distanceTo(targetX, targetY) <= radius) this.blockShot(shot, false);
+    });
+  }
+
+  private doCrossoverStorm(): void {
+    if (!this.consumeCooldown("skill2")) return;
+    const radius = 235 * this.player.quakeMultiplier;
+    this.effects.shockwave(this.player.x, this.player.y, radius, COLORS.cyan);
+    this.enemies.getChildren().forEach((object) => {
+      const enemy = object as EnemyEntity;
+      const distance = Phaser.Math.Distance.Between(this.player.x, this.player.y, enemy.x, enemy.y);
+      if (distance > radius) return;
+      const angle = Math.atan2(enemy.y - this.player.y, enemy.x - this.player.x);
+      this.damageEnemy(enemy, this.player.damage * 1.6, 430, angle, true);
+    });
+    this.shots.forEach((shot) => {
+      if (shot.active && shot.distanceTo(this.player.x, this.player.y) <= radius) {
+        this.blockShot(shot, false);
+      }
+    });
+  }
+
+  private doPickRoll(): void {
+    if (!this.consumeCooldown("skill3")) return;
+    const distance = 150;
+    const x = this.player.x + Math.cos(this.player.aimAngle) * distance;
+    const y = this.player.y + Math.sin(this.player.aimAngle) * distance;
+    const graphic = this.add.graphics().setDepth(9);
+    this.screenZones.push({ x, y, radius: 104, remaining: 5, graphic });
+    this.effects.shockwave(x, y, 104, COLORS.cyan);
+  }
+
+  private nearestEnemies(x: number, y: number, count: number, maxDistance: number): EnemyEntity[] {
+    return (this.enemies.getChildren() as EnemyEntity[])
+      .filter((enemy) => enemy.active)
+      .map((enemy) => ({ enemy, distance: Phaser.Math.Distance.Between(x, y, enemy.x, enemy.y) }))
+      .filter((entry) => entry.distance <= maxDistance)
+      .sort((a, b) => a.distance - b.distance)
+      .slice(0, count)
+      .map((entry) => entry.enemy);
+  }
+
+  private updateScreenZones(deltaSeconds: number): void {
+    this.screenZones.forEach((zone) => {
+      zone.remaining -= deltaSeconds;
+      const alpha = Phaser.Math.Clamp(zone.remaining / 5, 0.2, 0.7);
+      zone.graphic.clear();
+      zone.graphic.fillStyle(COLORS.cyan, 0.1 * alpha);
+      zone.graphic.fillCircle(zone.x, zone.y, zone.radius);
+      zone.graphic.lineStyle(3, COLORS.cyan, 0.55 * alpha);
+      zone.graphic.strokeCircle(zone.x, zone.y, zone.radius);
+    });
+    this.screenZones = this.screenZones.filter((zone) => {
+      if (zone.remaining <= 0) {
+        zone.graphic.destroy();
+        return false;
+      }
+      return true;
     });
   }
 
@@ -695,9 +896,13 @@ export class GameScene extends Phaser.Scene {
   }
 
   private updateShots(deltaSeconds: number): void {
-    const speedMultiplier = this.player.kingModeSeconds > 0 ? 0.55 : 1;
+    const speedMultiplier = this.player.empowerSeconds > 0 ? this.player.empowerShotSlow : 1;
     this.shots.forEach((shot) => {
       if (!shot.active) return;
+      if (this.screenZones.some((zone) => shot.distanceTo(zone.x, zone.y) <= zone.radius)) {
+        this.blockShot(shot, false);
+        return;
+      }
       if (shot.distanceTo(this.player.x, this.player.y - 24) < PLAYER_BASE.radius + 18) {
         this.blockShot(shot, true);
         return;
@@ -974,6 +1179,17 @@ export class GameScene extends Phaser.Scene {
     eventBus.emit("game:threat", { visible, copy: "SHOT INBOUND" });
   }
 
+  private emitLoadout(): void {
+    const slots = ["skill1", "skill2", "skill3", "ultimate"] as const;
+    eventBus.emit("game:loadout", {
+      character: this.character.name,
+      abilities: slots.map((slot) => {
+        const meta = SKILL_META[this.character.skills[slot]];
+        return { action: slot, name: meta.name, icon: meta.icon };
+      }),
+    });
+  }
+
   private emitHud(): void {
     const currentWave = this.waveDirector.current;
     const snapshot: HudSnapshot = {
@@ -1078,6 +1294,8 @@ export class GameScene extends Phaser.Scene {
     this.cleanup = [];
     this.shots.forEach((shot) => shot.destroy());
     this.shots = [];
+    this.screenZones.forEach((zone) => zone.graphic.destroy());
+    this.screenZones = [];
     eventBus.emit("game:hud-visible", false);
     eventBus.emit("game:threat", { visible: false });
     eventBus.emit("game:screen", { name: "upgrade", visible: false });

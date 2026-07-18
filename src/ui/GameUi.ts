@@ -1,10 +1,16 @@
 import { eventBus } from "../core/EventBus";
 import { saveStore } from "../core/SaveStore";
 import { audio } from "../game/AudioSystem";
-import { PERMANENT_UPGRADES, getPermanentUpgrade } from "../game/data";
-import { nextPermanentCost, permanentLevel, purchasePermanent } from "../game/MetaSystem";
+import { CHARACTERS, PERMANENT_UPGRADES, getCharacter, getPermanentUpgrade } from "../game/data";
+import {
+  nextPermanentCost,
+  permanentLevel,
+  purchasePermanent,
+  unlockCharacter,
+} from "../game/MetaSystem";
 import type {
   ActionName,
+  CharacterId,
   ChoiceOffer,
   CooldownSnapshot,
   HudSnapshot,
@@ -29,6 +35,7 @@ export class GameUi {
     pause: element("pause-screen"),
     results: element("results-screen"),
     locker: element("locker-screen"),
+    select: element("select-screen"),
   };
 
   private readonly hud = element("hud");
@@ -40,10 +47,12 @@ export class GameUi {
     this.preventBrowserGestures();
     this.bindMenu();
     this.bindLocker();
+    this.bindSelect();
     this.bindAbilities();
     this.bindJoystick();
     this.bindGameEvents();
     this.renderBestRun();
+    this.renderSelectedLegend();
   }
 
   private preventBrowserGestures(): void {
@@ -165,6 +174,91 @@ export class GameUi {
     this.renderLocker();
   }
 
+  private bindSelect(): void {
+    element<HTMLButtonElement>("open-select").addEventListener("click", () => {
+      this.renderSelect();
+      this.screens.select.classList.add("screen-visible");
+    });
+    element<HTMLButtonElement>("close-select").addEventListener("click", () => {
+      this.screens.select.classList.remove("screen-visible");
+      this.renderSelectedLegend();
+    });
+  }
+
+  private renderSelect(): void {
+    const { profile } = saveStore.load();
+    element("select-cred").textContent = `STREET CRED: ${profile.streetCred.toLocaleString()}`;
+    const container = element("select-cards");
+    container.replaceChildren();
+    Object.values(CHARACTERS).forEach((character) => {
+      const unlocked = profile.unlockedCharacters.includes(character.id);
+      const selected = profile.selectedCharacter === character.id;
+      const card = document.createElement("div");
+      card.className = `select-card${selected ? " selected" : ""}`;
+      const img = document.createElement("img");
+      img.src = `${import.meta.env.BASE_URL}assets/${character.textureKey}.png`;
+      img.alt = character.name;
+      const title = document.createElement("small");
+      title.textContent = character.title;
+      const name = document.createElement("h3");
+      name.textContent = character.name;
+      const description = document.createElement("p");
+      description.textContent = character.description;
+      const action = document.createElement("button");
+      action.type = "button";
+      action.className = "primary-button select-action";
+      if (selected) {
+        action.textContent = "SELECTED";
+        action.disabled = true;
+      } else if (unlocked) {
+        action.textContent = "SELECT";
+        action.addEventListener("click", () => this.selectCharacter(character.id));
+      } else {
+        action.textContent = `UNLOCK · ${character.unlockCost.toLocaleString()} CRED`;
+        action.disabled = profile.streetCred < character.unlockCost;
+        action.addEventListener("click", () => this.unlockAndSelect(character.id));
+      }
+      card.append(img, title, name, description, action);
+      container.appendChild(card);
+    });
+  }
+
+  private selectCharacter(id: CharacterId): void {
+    saveStore.updateProfile({ selectedCharacter: id });
+    audio.skill();
+    this.renderSelect();
+    this.renderSelectedLegend();
+  }
+
+  private unlockAndSelect(id: CharacterId): void {
+    const { profile } = saveStore.load();
+    const result = unlockCharacter(profile, getCharacter(id));
+    if (result.purchased) {
+      saveStore.updateProfile({
+        streetCred: result.profile.streetCred,
+        unlockedCharacters: result.profile.unlockedCharacters,
+        selectedCharacter: id,
+      });
+      audio.ultimate();
+    }
+    this.renderSelect();
+    this.renderSelectedLegend();
+  }
+
+  private renderSelectedLegend(): void {
+    const character = getCharacter(saveStore.load().profile.selectedCharacter);
+    const rate = (value: number): string => String(Math.max(40, Math.min(99, Math.round(value))));
+    element("legend-number").textContent = character.jerseyNumber;
+    element("legend-title").textContent = character.title;
+    element("legend-name").textContent = character.name;
+    element("legend-desc").textContent = character.description;
+    element("legend-power").textContent = rate(character.stats.damage * 2.3);
+    element("legend-defense").textContent = rate(character.stats.maxHp / 4);
+    element("legend-speed").textContent = rate(character.stats.moveSpeed / 3.4);
+    const portrait = document.getElementById("legend-portrait-img") as HTMLImageElement | null;
+    if (portrait) portrait.src = `${import.meta.env.BASE_URL}assets/${character.textureKey}.png`;
+  }
+
   private bindAbilities(): void {
     document.querySelectorAll<HTMLButtonElement>(".ability[data-action]").forEach((button) => {
       const action = button.dataset.action as ActionName;
@@ -238,7 +332,22 @@ export class GameUi {
   private bindGameEvents(): void {
     eventBus.on("game:screen", ({ name, visible }) => {
       this.screens[name].classList.toggle("screen-visible", visible);
-      if (name === "menu" && visible) this.renderBestRun();
+      if (name === "menu" && visible) {
+        this.renderBestRun();
+        this.renderSelectedLegend();
+      }
+    });
+    eventBus.on("game:loadout", ({ character, abilities }) => {
+      const nameEl = document.getElementById("hud-player-name");
+      if (nameEl) nameEl.textContent = character;
+      abilities.forEach(({ action, name, icon }) => {
+        const button = this.abilityButtons.get(action);
+        if (!button) return;
+        const iconEl = button.querySelector("i");
+        const labelEl = button.querySelector("b");
+        if (iconEl) iconEl.textContent = icon;
+        if (labelEl) labelEl.textContent = name;
+      });
     });
     eventBus.on("game:hud-visible", (visible) => {
       this.hud.classList.toggle("hud-visible", visible);

@@ -79,13 +79,31 @@ export interface UpgradeDefinition {
   maxRank: number;
 }
 
-export interface UpgradeOffer {
-  id: UpgradeId;
+export type EvolutionId =
+  | "signature-slam"
+  | "perimeter-lockdown"
+  | "fortress"
+  | "mamba-tempo"
+  | "crowd-roar";
+
+export interface EvolutionDefinition {
+  id: EvolutionId;
   name: string;
-  category: UpgradeCategory;
   description: string;
   icon: string;
-  rarity: UpgradeRarity;
+  requires: UpgradeId[];
+}
+
+export type ChoiceId = UpgradeId | EvolutionId;
+
+export interface ChoiceOffer {
+  kind: "upgrade" | "evolution";
+  id: ChoiceId;
+  name: string;
+  label: string;
+  description: string;
+  icon: string;
+  rarity: UpgradeRarity | "evolution";
   rank: number;
   maxRank: number;
 }
@@ -171,7 +189,7 @@ export interface GameEvents {
   "ui:tutorial": undefined;
   "ui:tutorial-close": undefined;
   "ui:action": ActionName;
-  "ui:upgrade-selected": UpgradeId;
+  "ui:upgrade-selected": ChoiceId;
   "ui:resume": undefined;
   "ui:quit": undefined;
   "ui:play-again": undefined;
@@ -181,7 +199,7 @@ export interface GameEvents {
   "game:hud-visible": boolean;
   "game:hud": HudSnapshot;
   "game:threat": { visible: boolean; copy?: string };
-  "game:upgrade-choice": UpgradeOffer[];
+  "game:upgrade-choice": ChoiceOffer[];
   "game:results": RunResult;
   "game:loading": { progress: number; copy: string };
 }

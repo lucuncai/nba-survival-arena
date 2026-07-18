@@ -952,6 +952,34 @@ button {
   background: linear-gradient(145deg, rgba(255, 196, 61, 0.18), transparent 55%), #0d111a;
 }
 
+.upgrade-card.rarity-evolution {
+  border-color: rgba(155, 109, 255, 0.6);
+  box-shadow: 0 0 26px rgba(155, 109, 255, 0.2);
+  background:
+    linear-gradient(145deg, rgba(155, 109, 255, 0.2), transparent 55%),
+    rgba(14, 10, 24, 0.96);
+}
+
+.upgrade-card.rarity-evolution::after {
+  background: #9b6dff;
+}
+
+.upgrade-card.rarity-evolution .upgrade-icon {
+  color: #c8b3ff;
+  border-color: rgba(155, 109, 255, 0.6);
+}
+
+.upgrade-card.rarity-evolution small,
+.upgrade-card.rarity-evolution .upgrade-rank {
+  color: #c8b3ff;
+}
+
+.upgrade-card.rarity-evolution:hover,
+.upgrade-card.rarity-evolution:focus-visible {
+  border-color: #9b6dff;
+  background: linear-gradient(145deg, rgba(155, 109, 255, 0.28), transparent 55%), #120c1f;
+}
+
 #pause-screen .modal-panel {
   display: flex;
   flex-direction: column;

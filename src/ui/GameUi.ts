@@ -3,11 +3,11 @@ import { saveStore } from "../core/SaveStore";
 import { audio } from "../game/AudioSystem";
 import type {
   ActionName,
+  ChoiceOffer,
   CooldownSnapshot,
   HudSnapshot,
   RunResult,
   ScreenName,
-  UpgradeOffer,
 } from "../game/types";
 
 function element<T extends HTMLElement>(id: string): T {
@@ -217,7 +217,7 @@ export class GameUi {
     overlay.textContent = Math.ceil(cooldown.remaining).toString();
   }
 
-  private renderUpgradeChoices(offers: UpgradeOffer[]): void {
+  private renderUpgradeChoices(offers: ChoiceOffer[]): void {
     const container = element("upgrade-cards");
     container.replaceChildren();
     offers.forEach((offer) => {
@@ -228,7 +228,8 @@ export class GameUi {
       icon.className = "upgrade-icon";
       icon.textContent = offer.icon;
       const category = document.createElement("small");
-      category.textContent = `${offer.rarity.toUpperCase()} · ${offer.category}`;
+      category.textContent =
+        offer.kind === "evolution" ? "EVOLUTION" : `${offer.rarity.toUpperCase()} · ${offer.label}`;
       const title = document.createElement("h3");
       title.textContent = offer.name;
       const description = document.createElement("p");
@@ -236,7 +237,11 @@ export class GameUi {
       const rank = document.createElement("span");
       rank.className = "upgrade-rank";
       rank.textContent =
-        offer.rank >= offer.maxRank ? "MAX RANK" : `RANK ${offer.rank} / ${offer.maxRank}`;
+        offer.kind === "evolution"
+          ? "EVOLVE"
+          : offer.rank >= offer.maxRank
+            ? "MAX RANK"
+            : `RANK ${offer.rank} / ${offer.maxRank}`;
       card.append(icon, category, title, description, rank);
       card.addEventListener("click", () => eventBus.emit("ui:upgrade-selected", offer.id), {
         once: true,

@@ -1,5 +1,11 @@
 import type { SeededRandom } from "../core/SeededRandom";
-import type { UpgradeDefinition, UpgradeId, UpgradeRarity } from "./types";
+import type {
+  EvolutionDefinition,
+  EvolutionId,
+  UpgradeDefinition,
+  UpgradeId,
+  UpgradeRarity,
+} from "./types";
 
 const RARITY_WEIGHT: Readonly<Record<UpgradeRarity, number>> = {
   common: 1,
@@ -44,4 +50,21 @@ export function rollUpgradeChoices(
   }
 
   return chosen;
+}
+
+/**
+ * Evolutions whose required upgrades are all at max rank and which have not yet
+ * been claimed this run.
+ */
+export function availableEvolutions(
+  pool: readonly EvolutionDefinition[],
+  ranks: ReadonlyMap<UpgradeId, number>,
+  maxRankOf: (id: UpgradeId) => number,
+  taken: ReadonlySet<EvolutionId>,
+): EvolutionDefinition[] {
+  return pool.filter(
+    (evolution) =>
+      !taken.has(evolution.id) &&
+      evolution.requires.every((id) => (ranks.get(id) ?? 0) >= maxRankOf(id)),
+  );
 }

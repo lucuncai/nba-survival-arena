@@ -4,21 +4,32 @@ import { saveStore } from "../core/SaveStore";
 import { SeededRandom } from "../core/SeededRandom";
 import { audio } from "../game/AudioSystem";
 import { COLORS, HOOP, PLAYER_BASE, VIEWPORT, WORLD } from "../game/config";
-import { UPGRADES, UPGRADE_EFFECTS, getCharacter, getEnemyDefinition, getUpgrade } from "../game/data";
+import {
+  EVOLUTIONS,
+  EVOLUTION_EFFECTS,
+  UPGRADES,
+  UPGRADE_EFFECTS,
+  getCharacter,
+  getEnemyDefinition,
+  getUpgrade,
+  isEvolutionId,
+} from "../game/data";
 import type { UpgradeContext } from "../game/data";
 import { EffectsSystem } from "../game/EffectsSystem";
 import { EnemyEntity, EnemyShot, PlayerEntity } from "../game/entities";
 import type {
   ActionName,
   CharacterDefinition,
+  ChoiceId,
+  ChoiceOffer,
+  EvolutionId,
   GameMode,
   HudSnapshot,
   RunResult,
   SkillId,
   UpgradeId,
-  UpgradeOffer,
 } from "../game/types";
-import { rollUpgradeChoices } from "../game/UpgradeSystem";
+import { availableEvolutions, rollUpgradeChoices } from "../game/UpgradeSystem";
 import { WaveDirector } from "../game/WaveDirector";
 
 interface ControlKeys {
@@ -77,6 +88,7 @@ export class GameScene extends Phaser.Scene {
   private dashAngle = 0;
   private dashHits = new Set<EnemyEntity>();
   private readonly upgradeRanks = new Map<UpgradeId, number>();
+  private readonly evolutionsTaken = new Set<EvolutionId>();
 
   private readonly cooldowns: Record<SkillName, number> = {
     skill1: 0,
@@ -216,6 +228,7 @@ export class GameScene extends Phaser.Scene {
     this.dashRemaining = 0;
     this.dashHits.clear();
     this.upgradeRanks.clear();
+    this.evolutionsTaken.clear();
     Object.keys(this.cooldowns).forEach((key) => {
       this.cooldowns[key as SkillName] = 0;
     });
@@ -364,7 +377,7 @@ export class GameScene extends Phaser.Scene {
       eventBus.on("input:joystick", (movement) => {
         this.mobileMove = movement;
       }),
-      eventBus.on("ui:upgrade-selected", (upgrade) => this.applyUpgrade(upgrade)),
+      eventBus.on("ui:upgrade-selected", (choice) => this.applyChoice(choice)),
       eventBus.on("ui:resume", () => this.resumeFromPause()),
       eventBus.on("ui:quit", () => this.returnToMenu()),
       eventBus.on("ui:tutorial-close", () => {
@@ -768,26 +781,63 @@ export class GameScene extends Phaser.Scene {
     eventBus.emit("game:upgrade-choice", offers);
   }
 
-  private buildUpgradeOffers(): UpgradeOffer[] {
-    return rollUpgradeChoices(UPGRADES, this.upgradeRanks, this.random, 3).map((definition) => ({
-      id: definition.id,
-      name: definition.name,
-      category: definition.category,
-      description: definition.description,
-      icon: definition.icon,
-      rarity: definition.rarity,
-      maxRank: definition.maxRank,
-      rank: (this.upgradeRanks.get(definition.id) ?? 0) + 1,
-    }));
+  private buildUpgradeOffers(): ChoiceOffer[] {
+    const offers: ChoiceOffer[] = [];
+
+    const evolution = availableEvolutions(
+      EVOLUTIONS,
+      this.upgradeRanks,
+      (id) => getUpgrade(id).maxRank,
+      this.evolutionsTaken,
+    )[0];
+    if (evolution) {
+      offers.push({
+        kind: "evolution",
+        id: evolution.id,
+        name: evolution.name,
+        label: "EVOLUTION",
+        description: evolution.description,
+        icon: evolution.icon,
+        rarity: "evolution",
+        rank: 1,
+        maxRank: 1,
+      });
+    }
+
+    const upgradeCount = 3 - offers.length;
+    rollUpgradeChoices(UPGRADES, this.upgradeRanks, this.random, upgradeCount).forEach(
+      (definition) => {
+        offers.push({
+          kind: "upgrade",
+          id: definition.id,
+          name: definition.name,
+          label: definition.category,
+          description: definition.description,
+          icon: definition.icon,
+          rarity: definition.rarity,
+          rank: (this.upgradeRanks.get(definition.id) ?? 0) + 1,
+          maxRank: definition.maxRank,
+        });
+      },
+    );
+
+    return offers;
   }
 
-  private applyUpgrade(id: UpgradeId): void {
+  private applyChoice(id: ChoiceId): void {
     if (!this.upgradePending) return;
-    const definition = getUpgrade(id);
-    const currentRank = this.upgradeRanks.get(id) ?? 0;
-    if (currentRank < definition.maxRank) {
-      this.upgradeRanks.set(id, currentRank + 1);
-      UPGRADE_EFFECTS[id](this.createUpgradeContext());
+    if (isEvolutionId(id)) {
+      if (!this.evolutionsTaken.has(id)) {
+        this.evolutionsTaken.add(id);
+        EVOLUTION_EFFECTS[id](this.createUpgradeContext());
+      }
+    } else {
+      const definition = getUpgrade(id);
+      const currentRank = this.upgradeRanks.get(id) ?? 0;
+      if (currentRank < definition.maxRank) {
+        this.upgradeRanks.set(id, currentRank + 1);
+        UPGRADE_EFFECTS[id](this.createUpgradeContext());
+      }
     }
     this.player.level += 1;
     this.upgradePending = false;

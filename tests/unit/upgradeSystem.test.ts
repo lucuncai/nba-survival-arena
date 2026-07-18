@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { SeededRandom } from "../../src/core/SeededRandom";
-import { UPGRADES, UPGRADE_EFFECTS } from "../../src/game/data";
-import { availableUpgrades, rollUpgradeChoices } from "../../src/game/UpgradeSystem";
-import type { UpgradeId } from "../../src/game/types";
+import { EVOLUTIONS, UPGRADES, UPGRADE_EFFECTS, getUpgrade } from "../../src/game/data";
+import { availableEvolutions, availableUpgrades, rollUpgradeChoices } from "../../src/game/UpgradeSystem";
+import type { EvolutionId, UpgradeId } from "../../src/game/types";
 
 describe("upgrade data", () => {
   it("has an effect for every upgrade and vice versa", () => {
@@ -48,5 +48,40 @@ describe("rollUpgradeChoices", () => {
     const ranks = new Map<UpgradeId, number>([["heavy-hands", 5]]);
     const available = availableUpgrades(UPGRADES, ranks).map((upgrade) => upgrade.id);
     expect(available).not.toContain("heavy-hands");
+  });
+});
+
+describe("availableEvolutions", () => {
+  const maxRankOf = (id: UpgradeId): number => getUpgrade(id).maxRank;
+
+  const maxedRanksFor = (evolutionId: EvolutionId): Map<UpgradeId, number> => {
+    const evolution = EVOLUTIONS.find((entry) => entry.id === evolutionId)!;
+    const ranks = new Map<UpgradeId, number>();
+    evolution.requires.forEach((id) => ranks.set(id, getUpgrade(id).maxRank));
+    return ranks;
+  };
+
+  it("offers nothing until requirements are maxed", () => {
+    expect(availableEvolutions(EVOLUTIONS, new Map(), maxRankOf, new Set())).toEqual([]);
+  });
+
+  it("offers an evolution once both requirements are maxed", () => {
+    const ranks = maxedRanksFor("signature-slam");
+    const available = availableEvolutions(EVOLUTIONS, ranks, maxRankOf, new Set());
+    expect(available.map((evolution) => evolution.id)).toContain("signature-slam");
+  });
+
+  it("excludes evolutions already taken", () => {
+    const ranks = maxedRanksFor("signature-slam");
+    const taken = new Set<EvolutionId>(["signature-slam"]);
+    const available = availableEvolutions(EVOLUTIONS, ranks, maxRankOf, taken);
+    expect(available.map((evolution) => evolution.id)).not.toContain("signature-slam");
+  });
+
+  it("only requires real upgrade ids", () => {
+    const ids = new Set<string>(UPGRADES.map((upgrade) => upgrade.id));
+    EVOLUTIONS.forEach((evolution) =>
+      evolution.requires.forEach((id) => expect(ids.has(id)).toBe(true)),
+    );
   });
 });

@@ -5,6 +5,8 @@ import type {
   CharacterId,
   EnemyDefinition,
   EnemyKind,
+  EvolutionDefinition,
+  EvolutionId,
   SkillId,
   UpgradeDefinition,
   UpgradeId,
@@ -431,6 +433,74 @@ export const UPGRADE_EFFECTS: Readonly<Record<UpgradeId, (context: UpgradeContex
     player.scoreMultiplier *= 1.4;
   },
 };
+
+export const EVOLUTIONS: readonly EvolutionDefinition[] = [
+  {
+    id: "signature-slam",
+    name: "SIGNATURE SLAM",
+    description: "Court Quake erupts far wider and your strikes hit much harder.",
+    icon: "✷",
+    requires: ["heavy-hands", "paint-beast"],
+  },
+  {
+    id: "perimeter-lockdown",
+    name: "PERIMETER LOCKDOWN",
+    description: "Sweeping reach and a huge critical chance shut down the perimeter.",
+    icon: "◈",
+    requires: ["wide-swat", "sharpshooter"],
+  },
+  {
+    id: "fortress",
+    name: "FORTRESS",
+    description: "Become a wall: massive health and heavy damage reduction.",
+    icon: "▣",
+    requires: ["iron-lungs", "bulwark"],
+  },
+  {
+    id: "mamba-tempo",
+    name: "MAMBA TEMPO",
+    description: "Blistering swat speed and rapid skill recovery.",
+    icon: "⇈",
+    requires: ["quick-release", "coiled-spring"],
+  },
+  {
+    id: "crowd-roar",
+    name: "CROWD ROAR",
+    description: "Double score, roaring Hype, and combos that never cool off.",
+    icon: "★",
+    requires: ["crowd-favorite", "showtime"],
+  },
+] as const;
+
+export const EVOLUTION_EFFECTS: Readonly<Record<EvolutionId, (context: UpgradeContext) => void>> = {
+  "signature-slam": ({ player }) => {
+    player.quakeMultiplier *= 1.6;
+    player.damage *= 1.25;
+  },
+  "perimeter-lockdown": ({ player }) => {
+    player.attackRange *= 1.3;
+    player.attackArc = Math.min(Math.PI * 1.3, player.attackArc * 1.2);
+    player.critChance = Math.min(0.9, player.critChance + 0.15);
+  },
+  fortress: ({ player }) => {
+    player.maxHp += 220;
+    player.heal(220);
+    player.damageReduction = Math.min(0.65, player.damageReduction + 0.12);
+  },
+  "mamba-tempo": ({ player }) => {
+    player.attackCooldownTotal *= 0.6;
+    player.skillCooldownMultiplier *= 0.7;
+  },
+  "crowd-roar": ({ player, extendCombo }) => {
+    player.scoreMultiplier *= 2;
+    player.hypeGainMultiplier *= 1.5;
+    extendCombo(3);
+  },
+};
+
+export function isEvolutionId(id: string): id is EvolutionId {
+  return Object.prototype.hasOwnProperty.call(EVOLUTION_EFFECTS, id);
+}
 
 export const SKILL_IDS: readonly SkillId[] = [
   "chasedown-block",

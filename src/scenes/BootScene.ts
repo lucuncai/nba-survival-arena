@@ -1,11 +1,20 @@
 import Phaser from "phaser";
 import { eventBus } from "../core/EventBus";
+import { ASSET_MANIFEST } from "../game/assets";
 import { WORLD } from "../game/config";
 import type { EnemyKind } from "../game/types";
 
 export class BootScene extends Phaser.Scene {
   constructor() {
     super("Boot");
+  }
+
+  preload(): void {
+    ASSET_MANIFEST.images.forEach((asset) => this.load.image(asset.key, asset.url));
+    ASSET_MANIFEST.atlases.forEach((asset) =>
+      this.load.atlas(asset.key, asset.textureUrl, asset.atlasUrl),
+    );
+    ASSET_MANIFEST.audio.forEach((asset) => this.load.audio(asset.key, asset.urls));
   }
 
   create(): void {
@@ -19,6 +28,11 @@ export class BootScene extends Phaser.Scene {
     eventBus.emit("game:loading", { progress: 1, copy: "Court ready." });
 
     this.time.delayedCall(220, () => this.scene.start("Menu"));
+  }
+
+  private addCanvasTexture(key: string, canvas: HTMLCanvasElement): void {
+    if (this.textures.exists(key)) return;
+    this.textures.addCanvas(key, canvas);
   }
 
   private generateCourt(): void {
@@ -123,11 +137,11 @@ export class BootScene extends Phaser.Scene {
     context.fillStyle = vignette;
     context.fillRect(0, 0, WORLD.width, WORLD.height);
 
-    this.textures.addCanvas("court", canvas);
+    this.addCanvasTexture("court", canvas);
   }
 
   private generateCharacters(): void {
-    this.textures.addCanvas("hero-king", this.createCharacterTexture("#ff5a1f", "#f7f1df", "23", true));
+    this.addCanvasTexture("hero-king", this.createCharacterTexture("#ff5a1f", "#f7f1df", "23", true));
 
     const enemyLooks: Array<[EnemyKind, string, string, string]> = [
       ["rookie", "#f28b3c", "#202631", "08"],
@@ -137,7 +151,7 @@ export class BootScene extends Phaser.Scene {
       ["boss", "#ff274b", "#11151f", "00"],
     ];
     enemyLooks.forEach(([kind, jersey, trim, number]) => {
-      this.textures.addCanvas(
+      this.addCanvasTexture(
         `enemy-${kind}`,
         this.createCharacterTexture(jersey, trim, number, false, kind === "boss" ? 1.18 : 1),
       );
@@ -286,7 +300,7 @@ export class BootScene extends Phaser.Scene {
       context.moveTo(center + radius * 0.78, center - radius * 0.62);
       context.bezierCurveTo(center + radius * 0.28, center - radius * 0.2, center + radius * 0.28, center + radius * 0.2, center + radius * 0.78, center + radius * 0.62);
       context.stroke();
-      this.textures.addCanvas(key, canvas);
+      this.addCanvasTexture(key, canvas);
     };
     makeBall("basketball", 48, "#ed6a24", "#3d1911");
     makeBall("boss-ball", 64, "#ff304f", "#340812");
@@ -305,7 +319,7 @@ export class BootScene extends Phaser.Scene {
     gradient.addColorStop(1, "rgba(255,255,255,0)");
     glowContext.fillStyle = gradient;
     glowContext.fillRect(0, 0, 64, 64);
-    this.textures.addCanvas("fx-glow", glow);
+    this.addCanvasTexture("fx-glow", glow);
 
     const ring = document.createElement("canvas");
     ring.width = 64;
@@ -319,7 +333,7 @@ export class BootScene extends Phaser.Scene {
     ringContext.beginPath();
     ringContext.arc(32, 32, 24, 0, Math.PI * 2);
     ringContext.stroke();
-    this.textures.addCanvas("fx-ring", ring);
+    this.addCanvasTexture("fx-ring", ring);
 
     const spark = document.createElement("canvas");
     spark.width = 32;
@@ -340,6 +354,6 @@ export class BootScene extends Phaser.Scene {
     sparkContext.lineTo(13, 12);
     sparkContext.closePath();
     sparkContext.fill();
-    this.textures.addCanvas("fx-spark", spark);
+    this.addCanvasTexture("fx-spark", spark);
   }
 }

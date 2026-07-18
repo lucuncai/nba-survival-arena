@@ -1,6 +1,11 @@
 import Phaser from "phaser";
 import { COLORS, PLAYER_BASE } from "./config";
-import type { CharacterDefinition, EnemyDefinition } from "./types";
+import type {
+  CharacterDefinition,
+  EliteModifierDefinition,
+  EliteModifierId,
+  EnemyDefinition,
+} from "./types";
 
 type EnemyState = "approach" | "windup" | "recover" | "stunned" | "dead";
 
@@ -119,10 +124,16 @@ export class EnemyEntity extends Phaser.Physics.Arcade.Sprite {
   knockbackRemaining = 0;
   contactCooldown = 0;
   isBoss: boolean;
+  readonly eliteId: EliteModifierId | null;
+  readonly speedMultiplier: number;
+  readonly shotDamageMult: number;
+  readonly accuracyBonus: number;
+  readonly scoreMult: number;
 
   private readonly hpBack: Phaser.GameObjects.Rectangle;
   private readonly hpFill: Phaser.GameObjects.Rectangle;
   private readonly telegraph: Phaser.GameObjects.Graphics;
+  private readonly aura: Phaser.GameObjects.Image | null;
 
   constructor(
     scene: Phaser.Scene,
@@ -130,10 +141,16 @@ export class EnemyEntity extends Phaser.Physics.Arcade.Sprite {
     y: number,
     definition: EnemyDefinition,
     healthMultiplier: number,
+    elite: EliteModifierDefinition | null = null,
   ) {
     super(scene, x, y, `enemy-${definition.kind}`);
     this.definition = definition;
-    this.maxHp = Math.round(definition.maxHp * healthMultiplier);
+    this.eliteId = elite?.id ?? null;
+    this.speedMultiplier = elite?.speedMult ?? 1;
+    this.shotDamageMult = elite?.shotDamageMult ?? 1;
+    this.accuracyBonus = elite?.accuracyBonus ?? 0;
+    this.scoreMult = elite?.scoreMult ?? 1;
+    this.maxHp = Math.round(definition.maxHp * healthMultiplier * (elite?.hpMult ?? 1));
     this.hp = this.maxHp;
     this.isBoss = definition.kind === "boss";
 
@@ -156,6 +173,15 @@ export class EnemyEntity extends Phaser.Physics.Arcade.Sprite {
       .setOrigin(0, 0.5)
       .setDepth(56);
     this.telegraph = scene.add.graphics().setDepth(12);
+    this.aura = elite
+      ? scene.add
+          .image(x, y + 8, "fx-ring")
+          .setTint(elite.color)
+          .setAlpha(0.7)
+          .setBlendMode(Phaser.BlendModes.ADD)
+          .setDepth(17)
+          .setDisplaySize(definition.radius * 3.4, definition.radius * 3.4)
+      : null;
     this.updateHealthBar();
   }
 
@@ -192,7 +218,7 @@ export class EnemyEntity extends Phaser.Physics.Arcade.Sprite {
 
     if (this.aiState === "approach") {
       if (distance > this.definition.preferredRange) {
-        const speed = this.definition.speed * slowMultiplier;
+        const speed = this.definition.speed * slowMultiplier * this.speedMultiplier;
         body.setVelocity(Math.cos(angle) * speed, Math.sin(angle) * speed);
         this.setFlipX(body.velocity.x < 0);
       } else {
@@ -255,6 +281,7 @@ export class EnemyEntity extends Phaser.Physics.Arcade.Sprite {
     this.hpBack.destroy();
     this.hpFill.destroy();
     this.telegraph.destroy();
+    this.aura?.destroy();
     super.destroy(fromScene);
   }
 
@@ -276,6 +303,7 @@ export class EnemyEntity extends Phaser.Physics.Arcade.Sprite {
     const barY = this.y - (this.isBoss ? 68 : 47);
     this.hpBack.setPosition(this.x, barY);
     this.hpFill.setPosition(this.x - this.hpBack.width / 2, barY);
+    this.aura?.setPosition(this.x, this.y + 8);
     const damaged = this.hp < this.maxHp;
     this.hpBack.setVisible(damaged || this.isBoss);
     this.hpFill.setVisible(damaged || this.isBoss);

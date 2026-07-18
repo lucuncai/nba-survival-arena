@@ -156,6 +156,19 @@ export interface WaveDefinition {
   boss?: EnemyKind;
 }
 
+export type EliteModifierId = "swift" | "shielded" | "splitter" | "hunter";
+
+export interface EliteModifierDefinition {
+  id: EliteModifierId;
+  name: string;
+  color: number;
+  hpMult: number;
+  speedMult: number;
+  shotDamageMult: number;
+  accuracyBonus: number;
+  scoreMult: number;
+}
+
 export interface CharacterStats {
   maxHp: number;
   moveSpeed: number;

@@ -3,6 +3,7 @@ import type { PlayerEntity } from "./entities";
 import type {
   CharacterDefinition,
   CharacterId,
+  EliteModifierDefinition,
   EnemyDefinition,
   EnemyKind,
   EvolutionDefinition,
@@ -659,6 +660,54 @@ export const SKILL_META: Readonly<Record<SkillId, { name: string; icon: string }
   "pick-roll": { name: "SET SCREEN", icon: "▤" },
   "night-night": { name: "NIGHT NIGHT", icon: "☾" },
 };
+
+export const ELITE_MODIFIERS: readonly EliteModifierDefinition[] = [
+  {
+    id: "swift",
+    name: "SWIFT",
+    color: COLORS.lime,
+    hpMult: 1.1,
+    speedMult: 1.6,
+    shotDamageMult: 1,
+    accuracyBonus: 0,
+    scoreMult: 1.8,
+  },
+  {
+    id: "shielded",
+    name: "SHIELDED",
+    color: COLORS.cyan,
+    hpMult: 2.4,
+    speedMult: 0.85,
+    shotDamageMult: 1,
+    accuracyBonus: 0,
+    scoreMult: 2,
+  },
+  {
+    id: "splitter",
+    name: "SPLITTER",
+    color: COLORS.gold,
+    hpMult: 1.3,
+    speedMult: 1.1,
+    shotDamageMult: 1,
+    accuracyBonus: 0,
+    scoreMult: 1.9,
+  },
+  {
+    id: "hunter",
+    name: "HUNTER",
+    color: COLORS.red,
+    hpMult: 1.2,
+    speedMult: 1,
+    shotDamageMult: 1.5,
+    accuracyBonus: 0.2,
+    scoreMult: 2,
+  },
+] as const;
+
+/** Probability that a non-boss spawn is an elite, scaling with wave number. */
+export function eliteChanceForWave(wave: number): number {
+  return Math.max(0, Math.min(0.35, (wave - 3) * 0.05));
+}
 
 export function getEnemyDefinition(kind: EnemyKind): EnemyDefinition {
   return ENEMIES[kind];

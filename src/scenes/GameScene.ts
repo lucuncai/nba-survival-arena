@@ -5,11 +5,13 @@ import { SeededRandom } from "../core/SeededRandom";
 import { audio } from "../game/AudioSystem";
 import { COLORS, HOOP, PLAYER_BASE, VIEWPORT, WORLD } from "../game/config";
 import {
+  ELITE_MODIFIERS,
   EVOLUTIONS,
   EVOLUTION_EFFECTS,
   SKILL_META,
   UPGRADES,
   UPGRADE_EFFECTS,
+  eliteChanceForWave,
   getCharacter,
   getEnemyDefinition,
   getUpgrade,
@@ -68,6 +70,7 @@ export class GameScene extends Phaser.Scene {
 
   private hoopHp: number = HOOP.maxHp;
   private hoopMaxHp: number = HOOP.maxHp;
+  private bossPhase = 1;
   private elapsedSeconds = 0;
   private score = 0;
   private kills = 0;
@@ -214,6 +217,7 @@ export class GameScene extends Phaser.Scene {
 
     this.updateShots(deltaSeconds);
     this.updateScreenZones(deltaSeconds);
+    if (this.boss?.active) this.updateBossPhase();
     this.updateWave(deltaSeconds);
     this.updateThreat();
 
@@ -230,6 +234,7 @@ export class GameScene extends Phaser.Scene {
     this.cleanup = [];
     this.hoopHp = HOOP.maxHp;
     this.hoopMaxHp = HOOP.maxHp;
+    this.bossPhase = 1;
     this.elapsedSeconds = 0;
     this.score = 0;
     this.kills = 0;
@@ -840,13 +845,19 @@ export class GameScene extends Phaser.Scene {
     if (!enemy.active) return;
     const wasBoss = enemy.isBoss;
     this.kills += 1;
-    this.score += Math.round(enemy.definition.score * this.player.scoreMultiplier * this.comboMultiplier());
+    this.score += Math.round(
+      enemy.definition.score * this.player.scoreMultiplier * this.comboMultiplier() * enemy.scoreMult,
+    );
     this.addHype(wasBoss ? 35 : 7);
     this.bumpCombo();
     this.effects.kill(enemy.x, enemy.y, enemy.definition.color);
+    const wasSplitter = enemy.eliteId === "splitter";
+    const splitX = enemy.x;
+    const splitY = enemy.y;
     this.enemies.remove(enemy);
     if (enemy === this.boss) this.boss = null;
     enemy.destroy();
+    if (wasSplitter) this.time.delayedCall(10, () => this.spawnSplit(splitX, splitY));
   }
 
   private blockShot(shot: EnemyShot, bodyBlock: boolean): void {
@@ -870,11 +881,15 @@ export class GameScene extends Phaser.Scene {
 
   private enemyShoot(enemy: EnemyEntity): void {
     const definition = enemy.definition;
-    const shotCount = enemy.isBoss ? 3 : 1;
+    const shotCount = enemy.isBoss ? 1 + this.bossPhase * 2 : 1;
+    const mid = (shotCount - 1) / 2;
+    const accuracy = Math.min(1, definition.accuracy + enemy.accuracyBonus);
     for (let index = 0; index < shotCount; index += 1) {
-      const spread = shotCount === 1 ? 0 : (index - 1) * 64;
-      const willScore = this.random.next() < definition.accuracy * (enemy.isBoss && index !== 1 ? 0.72 : 1);
+      const spread = shotCount === 1 ? 0 : (index - mid) * 64;
+      const offCenter = enemy.isBoss && Math.abs(index - mid) >= 0.5;
+      const willScore = this.random.next() < accuracy * (offCenter ? 0.72 : 1);
       const missOffset = willScore ? spread : spread + this.random.between(90, 155) * (this.random.next() > 0.5 ? 1 : -1);
+      const baseDamage = offCenter ? definition.shotDamage * 0.58 : definition.shotDamage;
       const shot = new EnemyShot(
         this,
         enemy.x,
@@ -882,7 +897,7 @@ export class GameScene extends Phaser.Scene {
         WORLD.centerX + missOffset,
         WORLD.centerY + (shotCount === 1 ? this.random.between(-22, 22) : spread * 0.25),
         definition.shotSpeed,
-        enemy.isBoss && index !== 1 ? Math.round(definition.shotDamage * 0.58) : definition.shotDamage,
+        Math.round(baseDamage * enemy.shotDamageMult),
         willScore,
         definition.color,
         enemy.isBoss,
@@ -976,10 +991,45 @@ export class GameScene extends Phaser.Scene {
     const y = Phaser.Math.Clamp(WORLD.centerY + Math.sin(angle) * distance, 90, WORLD.height - 90);
     const wave = this.waveDirector.current?.number ?? 1;
     const healthMultiplier = 1 + (wave - 1) * 0.14;
-    const enemy = new EnemyEntity(this, x, y, definition, healthMultiplier);
+    const elite =
+      kind !== "boss" && this.random.next() < eliteChanceForWave(wave)
+        ? this.random.pick(ELITE_MODIFIERS)
+        : null;
+    const enemy = new EnemyEntity(this, x, y, definition, healthMultiplier, elite);
     this.enemies.add(enemy);
     if (enemy.isBoss) this.boss = enemy;
-    this.effects.spawn(x, y, definition.color);
+    this.effects.spawn(x, y, elite ? elite.color : definition.color);
+  }
+
+  private spawnSplit(x: number, y: number): void {
+    const definition = getEnemyDefinition("rookie");
+    for (let index = 0; index < 2; index += 1) {
+      const ex = Phaser.Math.Clamp(x + this.random.between(-42, 42), 90, WORLD.width - 90);
+      const ey = Phaser.Math.Clamp(y + this.random.between(-42, 42), 90, WORLD.height - 90);
+      const enemy = new EnemyEntity(this, ex, ey, definition, 0.6);
+      this.enemies.add(enemy);
+      this.effects.spawn(ex, ey, definition.color);
+    }
+  }
+
+  private updateBossPhase(): void {
+    const boss = this.boss;
+    if (!boss || !boss.active) return;
+    const fraction = boss.hp / boss.maxHp;
+    const desired = fraction > 0.66 ? 1 : fraction > 0.33 ? 2 : 3;
+    if (desired <= this.bossPhase) return;
+    this.bossPhase = desired;
+    this.effects.announce("THE COMMISSIONER ERUPTS", `PHASE ${desired}`, "#ff3b55");
+    this.effects.shockwave(boss.x, boss.y, 220, COLORS.red);
+    if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      this.cameras.main.shake(300, 0.012);
+    }
+    audio.boss();
+    for (let index = 0; index < 1 + desired; index += 1) {
+      this.time.delayedCall(index * 130, () => {
+        if (this.boss?.active) this.spawnEnemy(this.random.next() < 0.5 ? "rookie" : "shooter");
+      });
+    }
   }
 
   private openUpgradeChoice(): void {

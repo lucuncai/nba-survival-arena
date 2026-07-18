@@ -980,6 +980,21 @@ button {
   background: linear-gradient(145deg, rgba(155, 109, 255, 0.28), transparent 55%), #120c1f;
 }
 
+.upgrade-card:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.upgrade-card.locker-card::after {
+  background: var(--gold);
+}
+
+.upgrade-card.locker-card .upgrade-icon {
+  color: var(--gold);
+  border-color: rgba(255, 196, 61, 0.4);
+}
+
 #pause-screen .modal-panel {
   display: flex;
   flex-direction: column;

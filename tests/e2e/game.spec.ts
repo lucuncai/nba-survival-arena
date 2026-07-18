@@ -14,6 +14,12 @@ test("boots into a playable first wave without browser errors", async ({ page })
     "none",
   );
 
+  await page.getByRole("button", { name: "LOCKER ROOM" }).click();
+  await expect(page.locator("#locker-screen")).toHaveClass(/screen-visible/);
+  await expect(page.locator("#locker-cards .upgrade-card")).not.toHaveCount(0);
+  await page.getByRole("button", { name: "BACK TO MENU" }).click();
+  await expect(page.locator("#locker-screen")).not.toHaveClass(/screen-visible/);
+
   await page.getByRole("button", { name: "ENTER THE COURT" }).click();
   await expect(page.locator("#tutorial-screen")).toHaveClass(/screen-visible/);
   await page.getByRole("button", { name: "GOT IT" }).click();

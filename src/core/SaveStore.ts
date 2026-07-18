@@ -148,6 +148,10 @@ export class SaveStore {
       bestTime: Math.max(current.bestTime, Math.floor(result.elapsedSeconds)),
       bestWave: Math.max(current.bestWave, result.wave),
       bestBlocks: Math.max(current.bestBlocks, result.blocks),
+      profile: {
+        ...current.profile,
+        streetCred: current.profile.streetCred + Math.max(0, Math.round(result.credEarned)),
+      },
     };
     this.persist(next);
     return next;

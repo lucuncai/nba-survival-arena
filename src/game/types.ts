@@ -1,6 +1,13 @@
 export type ActionName = "attack" | "skill1" | "skill2" | "skill3" | "ultimate";
 
-export type ScreenName = "loading" | "menu" | "tutorial" | "upgrade" | "pause" | "results";
+export type ScreenName =
+  | "loading"
+  | "menu"
+  | "tutorial"
+  | "upgrade"
+  | "pause"
+  | "results"
+  | "locker";
 
 export type GameMode = "campaign" | "endless";
 
@@ -67,6 +74,7 @@ export interface RunResult {
   blocks: number;
   maxCombo: number;
   wave: number;
+  credEarned: number;
 }
 
 export interface UpgradeDefinition {
@@ -172,6 +180,44 @@ export interface MetaProfile {
   permanentUpgrades: Record<string, number>;
 }
 
+export type PermanentUpgradeId =
+  | "training-camp"
+  | "conditioning"
+  | "reinforced-backboard"
+  | "quick-hands"
+  | "signing-bonus";
+
+export interface PermanentUpgradeDefinition {
+  id: PermanentUpgradeId;
+  name: string;
+  description: string;
+  icon: string;
+  maxLevel: number;
+  baseCost: number;
+}
+
+export interface PermanentBonuses {
+  damageMultiplier: number;
+  bonusMaxHp: number;
+  bonusRimHp: number;
+  attackCooldownMultiplier: number;
+  credMultiplier: number;
+}
+
+export interface LockerSnapshot {
+  streetCred: number;
+  entries: Array<{
+    id: PermanentUpgradeId;
+    name: string;
+    description: string;
+    icon: string;
+    level: number;
+    maxLevel: number;
+    cost: number | null;
+    affordable: boolean;
+  }>;
+}
+
 export interface SaveData {
   version: 3;
   gamesPlayed: number;
@@ -194,6 +240,10 @@ export interface GameEvents {
   "ui:quit": undefined;
   "ui:play-again": undefined;
   "ui:menu": undefined;
+  "ui:open-locker": undefined;
+  "ui:close-locker": undefined;
+  "ui:buy-permanent": PermanentUpgradeId;
+  "game:locker": LockerSnapshot;
   "input:joystick": { x: number; y: number };
   "game:screen": { name: ScreenName; visible: boolean };
   "game:hud-visible": boolean;

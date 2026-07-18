@@ -1,11 +1,15 @@
 import { eventBus } from "../core/EventBus";
 import { saveStore } from "../core/SaveStore";
 import { audio } from "../game/AudioSystem";
+import { PERMANENT_UPGRADES, getPermanentUpgrade } from "../game/data";
+import { nextPermanentCost, permanentLevel, purchasePermanent } from "../game/MetaSystem";
 import type {
   ActionName,
   ChoiceOffer,
   CooldownSnapshot,
   HudSnapshot,
+  LockerSnapshot,
+  PermanentUpgradeId,
   RunResult,
   ScreenName,
 } from "../game/types";
@@ -24,6 +28,7 @@ export class GameUi {
     upgrade: element("upgrade-screen"),
     pause: element("pause-screen"),
     results: element("results-screen"),
+    locker: element("locker-screen"),
   };
 
   private readonly hud = element("hud");
@@ -34,6 +39,7 @@ export class GameUi {
   constructor() {
     this.preventBrowserGestures();
     this.bindMenu();
+    this.bindLocker();
     this.bindAbilities();
     this.bindJoystick();
     this.bindGameEvents();
@@ -84,6 +90,79 @@ export class GameUi {
     element<HTMLButtonElement>("results-menu").addEventListener("click", () => {
       eventBus.emit("ui:menu", undefined);
     });
+  }
+
+  private bindLocker(): void {
+    element<HTMLButtonElement>("open-locker").addEventListener("click", () => {
+      this.renderLocker();
+      this.screens.locker.classList.add("screen-visible");
+    });
+    element<HTMLButtonElement>("close-locker").addEventListener("click", () => {
+      this.screens.locker.classList.remove("screen-visible");
+      this.renderBestRun();
+    });
+  }
+
+  private renderLocker(): void {
+    const snapshot = this.buildLockerSnapshot();
+    element("locker-cred").textContent = `STREET CRED: ${snapshot.streetCred.toLocaleString()}`;
+    const container = element("locker-cards");
+    container.replaceChildren();
+    snapshot.entries.forEach((entry) => {
+      const card = document.createElement("button");
+      card.type = "button";
+      card.className = "upgrade-card locker-card";
+      const icon = document.createElement("span");
+      icon.className = "upgrade-icon";
+      icon.textContent = entry.icon;
+      const level = document.createElement("small");
+      level.textContent = `LV ${entry.level} / ${entry.maxLevel}`;
+      const title = document.createElement("h3");
+      title.textContent = entry.name;
+      const description = document.createElement("p");
+      description.textContent = entry.description;
+      const cost = document.createElement("span");
+      cost.className = "upgrade-rank";
+      cost.textContent = entry.cost === null ? "MAXED" : `${entry.cost.toLocaleString()} CRED`;
+      card.append(icon, level, title, description, cost);
+      if (entry.cost === null || !entry.affordable) {
+        card.disabled = true;
+      } else {
+        card.addEventListener("click", () => this.buyPermanent(entry.id));
+      }
+      container.appendChild(card);
+    });
+  }
+
+  private buildLockerSnapshot(): LockerSnapshot {
+    const { profile } = saveStore.load();
+    return {
+      streetCred: profile.streetCred,
+      entries: PERMANENT_UPGRADES.map((definition) => {
+        const level = permanentLevel(profile, definition.id);
+        const cost = nextPermanentCost(definition, level);
+        return {
+          id: definition.id,
+          name: definition.name,
+          description: definition.description,
+          icon: definition.icon,
+          level,
+          maxLevel: definition.maxLevel,
+          cost,
+          affordable: cost !== null && profile.streetCred >= cost,
+        };
+      }),
+    };
+  }
+
+  private buyPermanent(id: PermanentUpgradeId): void {
+    const { profile } = saveStore.load();
+    const result = purchasePermanent(profile, getPermanentUpgrade(id));
+    if (result.purchased) {
+      saveStore.updateProfile(result.profile);
+      audio.skill();
+    }
+    this.renderLocker();
   }
 
   private bindAbilities(): void {
@@ -271,6 +350,7 @@ export class GameUi {
       [result.blocks.toString(), "BLOCKS"],
       [`${result.maxCombo}x`, "MAX COMBO"],
       [result.wave.toString(), "WAVE"],
+      [`+${result.credEarned.toLocaleString()}`, "STREET CRED"],
     ];
     resultRows.forEach(([value, label]) => {
       const item = document.createElement("div");
@@ -291,6 +371,7 @@ export class GameUi {
       save.gamesPlayed > 0
         ? `BEST RUN  //  ${save.bestScore.toLocaleString()} PTS  //  WAVE ${save.bestWave}  //  ${save.bestBlocks} BLOCKS`
         : "NO RUNS ON RECORD — MAKE THE FIRST ONE COUNT";
+    element("menu-cred").textContent = `STREET CRED  //  ${save.profile.streetCred.toLocaleString()}`;
   }
 
   private formatTime(totalSeconds: number): string {

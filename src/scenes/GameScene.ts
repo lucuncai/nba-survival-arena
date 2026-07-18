@@ -29,6 +29,7 @@ import type {
   SkillId,
   UpgradeId,
 } from "../game/types";
+import { computePermanentBonuses, computeRunCred } from "../game/MetaSystem";
 import { availableEvolutions, rollUpgradeChoices } from "../game/UpgradeSystem";
 import { WaveDirector } from "../game/WaveDirector";
 
@@ -87,6 +88,7 @@ export class GameScene extends Phaser.Scene {
   private dashRemaining = 0;
   private dashAngle = 0;
   private dashHits = new Set<EnemyEntity>();
+  private credMultiplier = 1;
   private readonly upgradeRanks = new Map<UpgradeId, number>();
   private readonly evolutionsTaken = new Set<EvolutionId>();
 
@@ -120,7 +122,8 @@ export class GameScene extends Phaser.Scene {
     this.cameras.main.centerOn(WORLD.centerX, WORLD.centerY);
     this.cameras.main.setBackgroundColor(COLORS.ink);
 
-    this.character = getCharacter(saveStore.load().profile.selectedCharacter);
+    const save = saveStore.load();
+    this.character = getCharacter(save.profile.selectedCharacter);
     this.skillHandlers = {
       "chasedown-block": () => this.doChasedownBlock(),
       "power-drive": () => this.doPowerDrive(),
@@ -131,6 +134,7 @@ export class GameScene extends Phaser.Scene {
     this.drawArena();
     this.createHoop();
     this.player = new PlayerEntity(this, WORLD.centerX + 175, WORLD.centerY, this.character);
+    this.applyPermanentBonuses(save.profile.permanentUpgrades);
     this.enemies = this.physics.add.group();
     this.effects = new EffectsSystem(this);
     this.random = new SeededRandom(Date.now());
@@ -227,6 +231,7 @@ export class GameScene extends Phaser.Scene {
     this.movementLocked = false;
     this.dashRemaining = 0;
     this.dashHits.clear();
+    this.credMultiplier = 1;
     this.upgradeRanks.clear();
     this.evolutionsTaken.clear();
     Object.keys(this.cooldowns).forEach((key) => {
@@ -862,6 +867,17 @@ export class GameScene extends Phaser.Scene {
     };
   }
 
+  private applyPermanentBonuses(levels: Record<string, number>): void {
+    const bonuses = computePermanentBonuses(levels);
+    this.player.maxHp += bonuses.bonusMaxHp;
+    this.player.hp = this.player.maxHp;
+    this.player.damage *= bonuses.damageMultiplier;
+    this.player.attackCooldownTotal *= bonuses.attackCooldownMultiplier;
+    this.hoopMaxHp += bonuses.bonusRimHp;
+    this.hoopHp = this.hoopMaxHp;
+    this.credMultiplier = bonuses.credMultiplier;
+  }
+
   private handlePlayerContact(enemy: EnemyEntity): void {
     if (!enemy.active || enemy.contactCooldown > 0 || this.ended) return;
     enemy.contactCooldown = 0.7;
@@ -1023,15 +1039,27 @@ export class GameScene extends Phaser.Scene {
     this.physics.pause();
     this.pointerAttacking = false;
     eventBus.emit("game:threat", { visible: false });
+    const finalScore = this.score + (victory ? 5_000 : 0);
+    const wave = this.waveDirector.current?.number ?? 1;
+    const credEarned = Math.round(
+      computeRunCred({
+        score: finalScore,
+        kills: this.kills,
+        blocks: this.blocks,
+        wave,
+        victory,
+      }) * this.credMultiplier,
+    );
     const result: RunResult = {
       victory,
       mode: this.mode,
       elapsedSeconds: this.elapsedSeconds,
-      score: this.score + (victory ? 5_000 : 0),
+      score: finalScore,
       kills: this.kills,
       blocks: this.blocks,
       maxCombo: this.maxCombo,
-      wave: this.waveDirector.current?.number ?? 1,
+      wave,
+      credEarned,
     };
     saveStore.recordRun(result);
     this.effects.announce(

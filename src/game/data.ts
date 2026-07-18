@@ -7,6 +7,8 @@ import type {
   EnemyKind,
   EvolutionDefinition,
   EvolutionId,
+  PermanentUpgradeDefinition,
+  PermanentUpgradeId,
   SkillId,
   UpgradeDefinition,
   UpgradeId,
@@ -500,6 +502,55 @@ export const EVOLUTION_EFFECTS: Readonly<Record<EvolutionId, (context: UpgradeCo
 
 export function isEvolutionId(id: string): id is EvolutionId {
   return Object.prototype.hasOwnProperty.call(EVOLUTION_EFFECTS, id);
+}
+
+export const PERMANENT_UPGRADES: readonly PermanentUpgradeDefinition[] = [
+  {
+    id: "training-camp",
+    name: "TRAINING CAMP",
+    description: "Start every run with +8% damage per level.",
+    icon: "✦",
+    maxLevel: 5,
+    baseCost: 60,
+  },
+  {
+    id: "conditioning",
+    name: "CONDITIONING",
+    description: "Start with +40 maximum health per level.",
+    icon: "♥",
+    maxLevel: 5,
+    baseCost: 60,
+  },
+  {
+    id: "reinforced-backboard",
+    name: "REINFORCED BACKBOARD",
+    description: "Start with +15 rim integrity per level.",
+    icon: "⬡",
+    maxLevel: 5,
+    baseCost: 70,
+  },
+  {
+    id: "quick-hands",
+    name: "QUICK HANDS",
+    description: "Start swatting 4% faster per level.",
+    icon: "ϟ",
+    maxLevel: 5,
+    baseCost: 80,
+  },
+  {
+    id: "signing-bonus",
+    name: "SIGNING BONUS",
+    description: "Earn +15% Street Cred per level.",
+    icon: "★",
+    maxLevel: 4,
+    baseCost: 100,
+  },
+] as const;
+
+export function getPermanentUpgrade(id: PermanentUpgradeId): PermanentUpgradeDefinition {
+  const upgrade = PERMANENT_UPGRADES.find((candidate) => candidate.id === id);
+  if (!upgrade) throw new Error(`Unknown permanent upgrade: ${id}`);
+  return upgrade;
 }
 
 export const SKILL_IDS: readonly SkillId[] = [

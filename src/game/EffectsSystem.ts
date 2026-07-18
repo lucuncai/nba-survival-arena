@@ -56,11 +56,29 @@ export class EffectsSystem {
     this.ring(x, y, COLORS.cyan, 0.55, 4.8, 330);
     this.ring(x, y, COLORS.cream, 0.2, 3.4, 210);
     this.hit(x, y, COLORS.cyan, true);
+    this.burst(x, y, COLORS.cyan, this.reducedMotion ? 5 : 16);
     this.floatingText(x, y - 34, "DENIED", "#48d8ff", 26);
+  }
+
+  private burst(x: number, y: number, color: number, count: number): void {
+    const emitter = this.scene.add.particles(x, y, "fx-spark", {
+      speed: { min: 60, max: 280 },
+      angle: { min: 0, max: 360 },
+      scale: { start: 0.7, end: 0 },
+      alpha: { start: 1, end: 0 },
+      lifespan: 440,
+      quantity: count,
+      tint: color,
+      blendMode: Phaser.BlendModes.ADD,
+      emitting: false,
+    });
+    emitter.explode(count);
+    this.scene.time.delayedCall(520, () => emitter.destroy());
   }
 
   kill(x: number, y: number, color: number): void {
     this.hit(x, y, color, true);
+    this.burst(x, y, color, this.reducedMotion ? 6 : 20);
     const smoke = this.scene.add.image(x, y, "fx-glow").setTint(color).setAlpha(0.38).setDepth(18);
     this.scene.tweens.add({
       targets: smoke,

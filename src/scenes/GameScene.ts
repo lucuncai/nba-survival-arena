@@ -71,6 +71,7 @@ export class GameScene extends Phaser.Scene {
   private hoopHp: number = HOOP.maxHp;
   private hoopMaxHp: number = HOOP.maxHp;
   private bossPhase = 1;
+  private hitStop = 0;
   private elapsedSeconds = 0;
   private score = 0;
   private kills = 0;
@@ -193,7 +194,12 @@ export class GameScene extends Phaser.Scene {
     if (Phaser.Input.Keyboard.JustDown(this.controls.pause)) this.togglePause();
     if (this.paused) return;
 
-    const deltaSeconds = Math.min(0.05, rawDelta / 1_000);
+    const rawSeconds = rawDelta / 1_000;
+    let deltaSeconds = Math.min(0.05, rawSeconds);
+    if (this.hitStop > 0) {
+      this.hitStop = Math.max(0, this.hitStop - rawSeconds);
+      deltaSeconds *= 0.08;
+    }
     this.elapsedSeconds += deltaSeconds;
     this.updateTimers(deltaSeconds);
     this.updateInput();
@@ -235,6 +241,7 @@ export class GameScene extends Phaser.Scene {
     this.hoopHp = HOOP.maxHp;
     this.hoopMaxHp = HOOP.maxHp;
     this.bossPhase = 1;
+    this.hitStop = 0;
     this.elapsedSeconds = 0;
     this.score = 0;
     this.kills = 0;
@@ -844,6 +851,8 @@ export class GameScene extends Phaser.Scene {
   private killEnemy(enemy: EnemyEntity): void {
     if (!enemy.active) return;
     const wasBoss = enemy.isBoss;
+    if (wasBoss) this.hitStop = Math.max(this.hitStop, 0.22);
+    else if (enemy.eliteId) this.hitStop = Math.max(this.hitStop, 0.07);
     this.kills += 1;
     this.score += Math.round(
       enemy.definition.score * this.player.scoreMultiplier * this.comboMultiplier() * enemy.scoreMult,

@@ -11,6 +11,7 @@ import { EnemyEntity, EnemyShot, PlayerEntity } from "../game/entities";
 import type {
   ActionName,
   CharacterDefinition,
+  GameMode,
   HudSnapshot,
   RunResult,
   SkillId,
@@ -38,6 +39,7 @@ type SkillName = "skill1" | "skill2" | "skill3" | "ultimate";
 export class GameScene extends Phaser.Scene {
   private player!: PlayerEntity;
   private character!: CharacterDefinition;
+  private mode: GameMode = "campaign";
   private skillHandlers!: Record<SkillId, () => void>;
   private enemies!: Phaser.Physics.Arcade.Group;
   private shots: EnemyShot[] = [];
@@ -94,6 +96,10 @@ export class GameScene extends Phaser.Scene {
     super("Game");
   }
 
+  init(data?: { mode?: GameMode }): void {
+    this.mode = data?.mode ?? "campaign";
+  }
+
   create(): void {
     this.resetRunState();
     this.physics.world.setBounds(0, 0, WORLD.width, WORLD.height);
@@ -116,7 +122,7 @@ export class GameScene extends Phaser.Scene {
     this.enemies = this.physics.add.group();
     this.effects = new EffectsSystem(this);
     this.random = new SeededRandom(Date.now());
-    this.waveDirector = new WaveDirector(this.random);
+    this.waveDirector = new WaveDirector(this.random, this.mode);
     this.aimGuide = this.add.graphics().setDepth(16);
 
     this.physics.add.collider(this.enemies, this.enemies);
@@ -908,6 +914,7 @@ export class GameScene extends Phaser.Scene {
       hoopMaxHp: this.hoopMaxHp,
       wave: currentWave?.number ?? 1,
       waveCount: this.waveDirector.waveCount,
+      endless: this.waveDirector.isEndless,
       elapsedSeconds: this.elapsedSeconds,
       score: this.score,
       level: this.player.level,
@@ -968,6 +975,7 @@ export class GameScene extends Phaser.Scene {
     eventBus.emit("game:threat", { visible: false });
     const result: RunResult = {
       victory,
+      mode: this.mode,
       elapsedSeconds: this.elapsedSeconds,
       score: this.score + (victory ? 5_000 : 0),
       kills: this.kills,

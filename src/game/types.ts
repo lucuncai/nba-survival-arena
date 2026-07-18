@@ -2,6 +2,8 @@ export type ActionName = "attack" | "skill1" | "skill2" | "skill3" | "ultimate";
 
 export type ScreenName = "loading" | "menu" | "tutorial" | "upgrade" | "pause" | "results";
 
+export type GameMode = "campaign" | "endless";
+
 export type EnemyKind = "rookie" | "shooter" | "sniper" | "center" | "boss";
 
 export type UpgradeId =
@@ -47,6 +49,7 @@ export interface HudSnapshot {
   hoopMaxHp: number;
   wave: number;
   waveCount: number;
+  endless: boolean;
   elapsedSeconds: number;
   score: number;
   level: number;
@@ -57,6 +60,7 @@ export interface HudSnapshot {
 
 export interface RunResult {
   victory: boolean;
+  mode: GameMode;
   elapsedSeconds: number;
   score: number;
   kills: number;
@@ -163,7 +167,7 @@ export interface SaveData {
 }
 
 export interface GameEvents {
-  "ui:start": undefined;
+  "ui:start": { mode: GameMode };
   "ui:tutorial": undefined;
   "ui:tutorial-close": undefined;
   "ui:action": ActionName;

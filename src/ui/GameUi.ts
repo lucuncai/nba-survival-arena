@@ -58,7 +58,11 @@ export class GameUi {
   private bindMenu(): void {
     element<HTMLButtonElement>("start-game").addEventListener("click", () => {
       audio.unlock();
-      eventBus.emit("ui:start", undefined);
+      eventBus.emit("ui:start", { mode: "campaign" });
+    });
+    element<HTMLButtonElement>("start-endless").addEventListener("click", () => {
+      audio.unlock();
+      eventBus.emit("ui:start", { mode: "endless" });
     });
     element<HTMLButtonElement>("how-to-play").addEventListener("click", () => {
       eventBus.emit("ui:tutorial", undefined);
@@ -182,7 +186,9 @@ export class GameUi {
       `${Math.ceil(snapshot.playerHp)} / ${Math.ceil(snapshot.playerMaxHp)}`;
     element("hoop-health-copy").textContent =
       `${Math.ceil(snapshot.hoopHp)} / ${Math.ceil(snapshot.hoopMaxHp)}`;
-    element("wave-label").textContent = `WAVE ${snapshot.wave} / ${snapshot.waveCount}`;
+    element("wave-label").textContent = snapshot.endless
+      ? `WAVE ${snapshot.wave}`
+      : `WAVE ${snapshot.wave} / ${snapshot.waveCount}`;
     element("timer-label").textContent = this.formatTime(snapshot.elapsedSeconds);
     element("score-label").textContent = `${snapshot.score.toLocaleString()} PTS`;
     element("level-label").textContent = `LV. ${snapshot.level}`;

@@ -35,6 +35,39 @@ describe("WaveDirector", () => {
   });
 });
 
+describe("WaveDirector endless", () => {
+  it("never runs out of waves and escalates the wave number", () => {
+    const director = new WaveDirector(new SeededRandom(5), "endless");
+    for (let number = 1; number <= 40; number += 1) {
+      const started = director.startNextWave();
+      expect(started).toBeDefined();
+      expect(started!.wave.number).toBe(number);
+    }
+    expect(director.isEndless).toBe(true);
+    expect(director.isFinalWave).toBe(false);
+    expect(director.waveCount).toBe(0);
+  });
+
+  it("spawns a boss on the endless cadence", () => {
+    const director = new WaveDirector(new SeededRandom(5), "endless");
+    const bossNumbers: number[] = [];
+    for (let index = 0; index < 20; index += 1) {
+      const started = director.startNextWave();
+      if (started?.bossToSpawn) bossNumbers.push(started.wave.number);
+    }
+    expect(bossNumbers).toContain(9);
+    expect(bossNumbers).toContain(14);
+  });
+
+  it("stops after the final wave in campaign mode", () => {
+    const director = new WaveDirector(new SeededRandom(1), "campaign");
+    for (let index = 0; index < WAVES.length; index += 1) {
+      expect(director.startNextWave()).toBeDefined();
+    }
+    expect(director.startNextWave()).toBeUndefined();
+  });
+});
+
 describe("SeededRandom", () => {
   it("produces reproducible runs", () => {
     const first = new SeededRandom(2026);

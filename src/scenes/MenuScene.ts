@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { eventBus } from "../core/EventBus";
 import { COLORS, VIEWPORT, WORLD } from "../game/config";
+import type { GameMode } from "../game/types";
 
 export class MenuScene extends Phaser.Scene {
   private cleanup: Array<() => void> = [];
@@ -60,7 +61,7 @@ export class MenuScene extends Phaser.Scene {
     }
 
     this.cleanup.push(
-      eventBus.on("ui:start", () => this.startRun()),
+      eventBus.on("ui:start", ({ mode }) => this.startRun(mode)),
       eventBus.on("ui:tutorial", () => {
         eventBus.emit("game:screen", { name: "tutorial", visible: true });
       }),
@@ -80,10 +81,10 @@ export class MenuScene extends Phaser.Scene {
     this.registry.set("world-size", `${WORLD.width}x${WORLD.height}`);
   }
 
-  private startRun(): void {
+  private startRun(mode: GameMode): void {
     eventBus.emit("game:screen", { name: "menu", visible: false });
     eventBus.emit("game:screen", { name: "tutorial", visible: false });
-    this.scene.start("Game");
+    this.scene.start("Game", { mode });
   }
 
   private dispose(): void {

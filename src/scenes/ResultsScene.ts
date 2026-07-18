@@ -46,7 +46,7 @@ export class ResultsScene extends Phaser.Scene {
     glow.setDepth(-1);
 
     this.cleanup.push(
-      eventBus.on("ui:play-again", () => this.scene.start("Game")),
+      eventBus.on("ui:play-again", () => this.scene.start("Game", { mode: this.result.mode })),
       eventBus.on("ui:menu", () => this.scene.start("Menu")),
     );
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.dispose());

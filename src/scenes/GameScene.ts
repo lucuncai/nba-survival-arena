@@ -4,7 +4,8 @@ import { saveStore } from "../core/SaveStore";
 import { SeededRandom } from "../core/SeededRandom";
 import { audio } from "../game/AudioSystem";
 import { COLORS, HOOP, PLAYER_BASE, VIEWPORT, WORLD } from "../game/config";
-import { UPGRADES, getCharacter, getEnemyDefinition } from "../game/data";
+import { UPGRADES, UPGRADE_EFFECTS, getCharacter, getEnemyDefinition, getUpgrade } from "../game/data";
+import type { UpgradeContext } from "../game/data";
 import { EffectsSystem } from "../game/EffectsSystem";
 import { EnemyEntity, EnemyShot, PlayerEntity } from "../game/entities";
 import type {
@@ -14,7 +15,9 @@ import type {
   RunResult,
   SkillId,
   UpgradeId,
+  UpgradeOffer,
 } from "../game/types";
+import { rollUpgradeChoices } from "../game/UpgradeSystem";
 import { WaveDirector } from "../game/WaveDirector";
 
 interface ControlKeys {
@@ -71,6 +74,7 @@ export class GameScene extends Phaser.Scene {
   private dashRemaining = 0;
   private dashAngle = 0;
   private dashHits = new Set<EnemyEntity>();
+  private readonly upgradeRanks = new Map<UpgradeId, number>();
 
   private readonly cooldowns: Record<SkillName, number> = {
     skill1: 0,
@@ -205,6 +209,7 @@ export class GameScene extends Phaser.Scene {
     this.movementLocked = false;
     this.dashRemaining = 0;
     this.dashHits.clear();
+    this.upgradeRanks.clear();
     Object.keys(this.cooldowns).forEach((key) => {
       this.cooldowns[key as SkillName] = 0;
     });
@@ -588,8 +593,8 @@ export class GameScene extends Phaser.Scene {
     forceCritical = false,
   ): void {
     if (!enemy.active) return;
-    const critical = forceCritical || this.random.next() < 0.12;
-    const damage = Math.round(rawDamage * (critical ? 1.65 : 1));
+    const critical = forceCritical || this.random.next() < this.player.critChance;
+    const damage = Math.round(rawDamage * (critical ? this.player.critMultiplier : 1));
     const died = enemy.takeDamage(damage, angle, knockback);
     this.effects.hit(enemy.x, enemy.y - 16, enemy.definition.color, critical);
     this.effects.floatingText(
@@ -746,50 +751,37 @@ export class GameScene extends Phaser.Scene {
   }
 
   private openUpgradeChoice(): void {
+    const offers = this.buildUpgradeOffers();
+    if (offers.length === 0) {
+      this.startNextWave();
+      return;
+    }
     this.upgradePending = true;
     this.paused = true;
     this.physics.pause();
-    const choices = this.random.shuffle(UPGRADES).slice(0, 3);
-    eventBus.emit("game:upgrade-choice", choices);
+    eventBus.emit("game:upgrade-choice", offers);
+  }
+
+  private buildUpgradeOffers(): UpgradeOffer[] {
+    return rollUpgradeChoices(UPGRADES, this.upgradeRanks, this.random, 3).map((definition) => ({
+      id: definition.id,
+      name: definition.name,
+      category: definition.category,
+      description: definition.description,
+      icon: definition.icon,
+      rarity: definition.rarity,
+      maxRank: definition.maxRank,
+      rank: (this.upgradeRanks.get(definition.id) ?? 0) + 1,
+    }));
   }
 
   private applyUpgrade(id: UpgradeId): void {
     if (!this.upgradePending) return;
-    switch (id) {
-      case "heavy-hands":
-        this.player.damage *= 1.24;
-        break;
-      case "quick-release":
-        this.player.attackCooldownTotal *= 0.82;
-        this.player.skillCooldownMultiplier *= 0.9;
-        break;
-      case "iron-lungs":
-        this.player.maxHp += 70;
-        this.player.heal(70);
-        break;
-      case "rim-armor":
-        this.hoopMaxHp += 10;
-        this.hoopHp = Math.min(this.hoopMaxHp, this.hoopHp + 24);
-        break;
-      case "wide-swat":
-        this.player.attackRange *= 1.22;
-        this.player.attackArc = Math.min(Math.PI * 1.2, this.player.attackArc * 1.16);
-        break;
-      case "second-jump":
-        this.player.blockHeal += 6;
-        this.player.hypeGainMultiplier *= 1.18;
-        break;
-      case "crowd-favorite":
-        this.comboDuration += 1.2;
-        this.player.scoreMultiplier *= 1.35;
-        break;
-      case "paint-beast":
-        this.player.quakeMultiplier *= 1.3;
-        break;
-      case "fast-break":
-        this.player.moveSpeed *= 1.14;
-        this.player.driveMultiplier *= 1.2;
-        break;
+    const definition = getUpgrade(id);
+    const currentRank = this.upgradeRanks.get(id) ?? 0;
+    if (currentRank < definition.maxRank) {
+      this.upgradeRanks.set(id, currentRank + 1);
+      UPGRADE_EFFECTS[id](this.createUpgradeContext());
     }
     this.player.level += 1;
     this.upgradePending = false;
@@ -797,6 +789,21 @@ export class GameScene extends Phaser.Scene {
     eventBus.emit("game:screen", { name: "upgrade", visible: false });
     this.physics.resume();
     this.startNextWave();
+  }
+
+  private createUpgradeContext(): UpgradeContext {
+    return {
+      player: this.player,
+      addHoopMaxHp: (amount) => {
+        this.hoopMaxHp += amount;
+      },
+      repairHoop: (amount) => {
+        this.hoopHp = Math.min(this.hoopMaxHp, this.hoopHp + amount);
+      },
+      extendCombo: (seconds) => {
+        this.comboDuration += seconds;
+      },
+    };
   }
 
   private handlePlayerContact(enemy: EnemyEntity): void {

@@ -20,6 +20,8 @@ export class PlayerEntity extends Phaser.Physics.Arcade.Sprite {
   scoreMultiplier = 1;
   quakeMultiplier = 1;
   driveMultiplier = 1;
+  critChance = 0.12;
+  critMultiplier = 1.65;
   invulnerableSeconds = 0;
   kingModeSeconds = 0;
   aimAngle = 0;

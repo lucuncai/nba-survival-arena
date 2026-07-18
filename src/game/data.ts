@@ -1,4 +1,5 @@
 import { COLORS, PLAYER_BASE } from "./config";
+import type { PlayerEntity } from "./entities";
 import type {
   CharacterDefinition,
   CharacterId,
@@ -158,36 +159,46 @@ export const UPGRADES: readonly UpgradeDefinition[] = [
     id: "heavy-hands",
     name: "HEAVY HANDS",
     category: "POWER",
-    description: "+24% swat and skill damage.",
+    description: "+18% swat and skill damage per rank.",
     icon: "✦",
+    rarity: "common",
+    maxRank: 5,
   },
   {
     id: "quick-release",
     name: "QUICK RELEASE",
     category: "MOMENTUM",
-    description: "Swat 18% faster and recover skills 10% sooner.",
+    description: "Swat 12% faster and recover skills 6% sooner.",
     icon: "ϟ",
+    rarity: "common",
+    maxRank: 5,
   },
   {
     id: "iron-lungs",
     name: "IRON LUNGS",
     category: "DEFENSE",
-    description: "+70 maximum health and heal the same amount.",
+    description: "+60 maximum health and heal the same amount.",
     icon: "♥",
+    rarity: "common",
+    maxRank: 5,
   },
   {
     id: "rim-armor",
     name: "RIM ARMOR",
     category: "DEFENSE",
-    description: "Repair 24 integrity and increase the rim's maximum by 10.",
+    description: "Repair 22 integrity and raise the rim maximum by 10.",
     icon: "⬡",
+    rarity: "common",
+    maxRank: 5,
   },
   {
-    id: "wide-swat",
-    name: "WIDE SWAT",
-    category: "DEFENSE",
-    description: "+22% attack reach and a wider block angle.",
-    icon: "◖",
+    id: "fast-break",
+    name: "FAST BREAK",
+    category: "POWER",
+    description: "+10% movement speed; Power Drive travels farther.",
+    icon: "➜",
+    rarity: "common",
+    maxRank: 5,
   },
   {
     id: "second-jump",
@@ -195,29 +206,231 @@ export const UPGRADES: readonly UpgradeDefinition[] = [
     category: "MOMENTUM",
     description: "Every block heals 6 health and grants extra Hype.",
     icon: "↟",
+    rarity: "common",
+    maxRank: 5,
+  },
+  {
+    id: "sharpshooter",
+    name: "SHARPSHOOTER",
+    category: "POWER",
+    description: "+6% critical hit chance.",
+    icon: "◈",
+    rarity: "common",
+    maxRank: 5,
+  },
+  {
+    id: "showtime",
+    name: "SHOWTIME",
+    category: "MOMENTUM",
+    description: "+20% score from every source.",
+    icon: "★",
+    rarity: "common",
+    maxRank: 5,
+  },
+  {
+    id: "wide-swat",
+    name: "WIDE SWAT",
+    category: "DEFENSE",
+    description: "+16% attack reach and a wider block angle.",
+    icon: "◖",
+    rarity: "rare",
+    maxRank: 3,
   },
   {
     id: "crowd-favorite",
     name: "CROWD FAVORITE",
     category: "MOMENTUM",
-    description: "Combos last longer and score 35% more.",
+    description: "Combos last longer and score 25% more.",
     icon: "♛",
+    rarity: "rare",
+    maxRank: 3,
   },
   {
     id: "paint-beast",
     name: "PAINT BEAST",
     category: "POWER",
-    description: "Court Quake grows 30% and stuns longer.",
+    description: "Court Quake grows 25% and stuns longer.",
     icon: "◎",
+    rarity: "rare",
+    maxRank: 3,
   },
   {
-    id: "fast-break",
-    name: "FAST BREAK",
+    id: "bulwark",
+    name: "BULWARK",
+    category: "DEFENSE",
+    description: "Take 6% less damage.",
+    icon: "▣",
+    rarity: "rare",
+    maxRank: 3,
+  },
+  {
+    id: "hype-machine",
+    name: "HYPE MACHINE",
+    category: "MOMENTUM",
+    description: "+30% Hype gain.",
+    icon: "⚡",
+    rarity: "rare",
+    maxRank: 3,
+  },
+  {
+    id: "coiled-spring",
+    name: "COILED SPRING",
+    category: "MOMENTUM",
+    description: "Skills recover 15% sooner.",
+    icon: "⟲",
+    rarity: "rare",
+    maxRank: 3,
+  },
+  {
+    id: "reinforced-rim",
+    name: "REINFORCED RIM",
+    category: "DEFENSE",
+    description: "+20 rim maximum and repair 20 integrity.",
+    icon: "⬢",
+    rarity: "rare",
+    maxRank: 3,
+  },
+  {
+    id: "killer-instinct",
+    name: "KILLER INSTINCT",
     category: "POWER",
-    description: "+14% movement speed; Power Drive travels farther.",
-    icon: "➜",
+    description: "Critical hits deal +40% more damage.",
+    icon: "✷",
+    rarity: "epic",
+    maxRank: 2,
+  },
+  {
+    id: "adrenaline",
+    name: "ADRENALINE",
+    category: "MOMENTUM",
+    description: "Swat 28% faster.",
+    icon: "⇈",
+    rarity: "epic",
+    maxRank: 2,
+  },
+  {
+    id: "last-stand",
+    name: "LAST STAND",
+    category: "DEFENSE",
+    description: "Take 10% less damage.",
+    icon: "✚",
+    rarity: "epic",
+    maxRank: 2,
+  },
+  {
+    id: "iron-will",
+    name: "IRON WILL",
+    category: "DEFENSE",
+    description: "+140 maximum health and heal the same amount.",
+    icon: "✜",
+    rarity: "epic",
+    maxRank: 2,
+  },
+  {
+    id: "brute-force",
+    name: "BRUTE FORCE",
+    category: "POWER",
+    description: "+45% swat and skill damage.",
+    icon: "✖",
+    rarity: "epic",
+    maxRank: 2,
+  },
+  {
+    id: "combo-king",
+    name: "COMBO KING",
+    category: "MOMENTUM",
+    description: "Combos last much longer and score 40% more.",
+    icon: "❖",
+    rarity: "epic",
+    maxRank: 2,
   },
 ] as const;
+
+export interface UpgradeContext {
+  player: PlayerEntity;
+  addHoopMaxHp(amount: number): void;
+  repairHoop(amount: number): void;
+  extendCombo(seconds: number): void;
+}
+
+const MAX_DAMAGE_REDUCTION = 0.6;
+const MAX_CRIT_CHANCE = 0.85;
+
+export const UPGRADE_EFFECTS: Readonly<Record<UpgradeId, (context: UpgradeContext) => void>> = {
+  "heavy-hands": ({ player }) => {
+    player.damage *= 1.18;
+  },
+  "quick-release": ({ player }) => {
+    player.attackCooldownTotal *= 0.88;
+    player.skillCooldownMultiplier *= 0.94;
+  },
+  "iron-lungs": ({ player }) => {
+    player.maxHp += 60;
+    player.heal(60);
+  },
+  "rim-armor": ({ addHoopMaxHp, repairHoop }) => {
+    addHoopMaxHp(10);
+    repairHoop(22);
+  },
+  "fast-break": ({ player }) => {
+    player.moveSpeed *= 1.1;
+    player.driveMultiplier *= 1.15;
+  },
+  "second-jump": ({ player }) => {
+    player.blockHeal += 6;
+    player.hypeGainMultiplier *= 1.12;
+  },
+  sharpshooter: ({ player }) => {
+    player.critChance = Math.min(MAX_CRIT_CHANCE, player.critChance + 0.06);
+  },
+  showtime: ({ player }) => {
+    player.scoreMultiplier *= 1.2;
+  },
+  "wide-swat": ({ player }) => {
+    player.attackRange *= 1.16;
+    player.attackArc = Math.min(Math.PI * 1.2, player.attackArc * 1.14);
+  },
+  "crowd-favorite": ({ player, extendCombo }) => {
+    extendCombo(1.2);
+    player.scoreMultiplier *= 1.25;
+  },
+  "paint-beast": ({ player }) => {
+    player.quakeMultiplier *= 1.25;
+  },
+  bulwark: ({ player }) => {
+    player.damageReduction = Math.min(MAX_DAMAGE_REDUCTION, player.damageReduction + 0.06);
+  },
+  "hype-machine": ({ player }) => {
+    player.hypeGainMultiplier *= 1.3;
+  },
+  "coiled-spring": ({ player }) => {
+    player.skillCooldownMultiplier *= 0.85;
+  },
+  "reinforced-rim": ({ addHoopMaxHp, repairHoop }) => {
+    addHoopMaxHp(20);
+    repairHoop(20);
+  },
+  "killer-instinct": ({ player }) => {
+    player.critMultiplier += 0.4;
+  },
+  adrenaline: ({ player }) => {
+    player.attackCooldownTotal *= 0.72;
+  },
+  "last-stand": ({ player }) => {
+    player.damageReduction = Math.min(MAX_DAMAGE_REDUCTION, player.damageReduction + 0.1);
+  },
+  "iron-will": ({ player }) => {
+    player.maxHp += 140;
+    player.heal(140);
+  },
+  "brute-force": ({ player }) => {
+    player.damage *= 1.45;
+  },
+  "combo-king": ({ player, extendCombo }) => {
+    extendCombo(2);
+    player.scoreMultiplier *= 1.4;
+  },
+};
 
 export const SKILL_IDS: readonly SkillId[] = [
   "chasedown-block",

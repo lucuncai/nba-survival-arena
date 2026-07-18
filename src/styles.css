@@ -894,6 +894,64 @@ button {
   line-height: 1.5;
 }
 
+.upgrade-card .upgrade-rank {
+  position: absolute;
+  right: 16px;
+  bottom: 12px;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.upgrade-card.rarity-rare {
+  border-color: rgba(72, 216, 255, 0.4);
+}
+
+.upgrade-card.rarity-rare::after {
+  background: var(--cyan);
+}
+
+.upgrade-card.rarity-rare .upgrade-icon {
+  color: var(--cyan);
+  border-color: rgba(72, 216, 255, 0.4);
+}
+
+.upgrade-card.rarity-rare small {
+  color: var(--cyan);
+}
+
+.upgrade-card.rarity-rare:hover,
+.upgrade-card.rarity-rare:focus-visible {
+  border-color: var(--cyan);
+  background: linear-gradient(145deg, rgba(72, 216, 255, 0.16), transparent 55%), #0d111a;
+}
+
+.upgrade-card.rarity-epic {
+  border-color: rgba(255, 196, 61, 0.45);
+  box-shadow: 0 0 22px rgba(255, 196, 61, 0.12);
+}
+
+.upgrade-card.rarity-epic::after {
+  background: var(--gold);
+}
+
+.upgrade-card.rarity-epic .upgrade-icon {
+  color: var(--gold);
+  border-color: rgba(255, 196, 61, 0.5);
+}
+
+.upgrade-card.rarity-epic small {
+  color: var(--gold);
+}
+
+.upgrade-card.rarity-epic:hover,
+.upgrade-card.rarity-epic:focus-visible {
+  border-color: var(--gold);
+  background: linear-gradient(145deg, rgba(255, 196, 61, 0.18), transparent 55%), #0d111a;
+}
+
 #pause-screen .modal-panel {
   display: flex;
   flex-direction: column;

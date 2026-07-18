@@ -13,7 +13,23 @@ export type UpgradeId =
   | "second-jump"
   | "crowd-favorite"
   | "paint-beast"
-  | "fast-break";
+  | "fast-break"
+  | "sharpshooter"
+  | "showtime"
+  | "killer-instinct"
+  | "bulwark"
+  | "hype-machine"
+  | "coiled-spring"
+  | "reinforced-rim"
+  | "adrenaline"
+  | "last-stand"
+  | "iron-will"
+  | "brute-force"
+  | "combo-king";
+
+export type UpgradeCategory = "POWER" | "DEFENSE" | "MOMENTUM";
+
+export type UpgradeRarity = "common" | "rare" | "epic";
 
 export type CharacterId = "king";
 
@@ -52,9 +68,22 @@ export interface RunResult {
 export interface UpgradeDefinition {
   id: UpgradeId;
   name: string;
-  category: "POWER" | "DEFENSE" | "MOMENTUM";
+  category: UpgradeCategory;
   description: string;
   icon: string;
+  rarity: UpgradeRarity;
+  maxRank: number;
+}
+
+export interface UpgradeOffer {
+  id: UpgradeId;
+  name: string;
+  category: UpgradeCategory;
+  description: string;
+  icon: string;
+  rarity: UpgradeRarity;
+  rank: number;
+  maxRank: number;
 }
 
 export interface EnemyDefinition {
@@ -148,7 +177,7 @@ export interface GameEvents {
   "game:hud-visible": boolean;
   "game:hud": HudSnapshot;
   "game:threat": { visible: boolean; copy?: string };
-  "game:upgrade-choice": UpgradeDefinition[];
+  "game:upgrade-choice": UpgradeOffer[];
   "game:results": RunResult;
   "game:loading": { progress: number; copy: string };
 }

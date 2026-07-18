@@ -7,7 +7,7 @@ import type {
   HudSnapshot,
   RunResult,
   ScreenName,
-  UpgradeDefinition,
+  UpgradeOffer,
 } from "../game/types";
 
 function element<T extends HTMLElement>(id: string): T {
@@ -211,24 +211,30 @@ export class GameUi {
     overlay.textContent = Math.ceil(cooldown.remaining).toString();
   }
 
-  private renderUpgradeChoices(upgrades: UpgradeDefinition[]): void {
+  private renderUpgradeChoices(offers: UpgradeOffer[]): void {
     const container = element("upgrade-cards");
     container.replaceChildren();
-    upgrades.forEach((upgrade) => {
+    offers.forEach((offer) => {
       const card = document.createElement("button");
       card.type = "button";
-      card.className = "upgrade-card";
+      card.className = `upgrade-card rarity-${offer.rarity}`;
       const icon = document.createElement("span");
       icon.className = "upgrade-icon";
-      icon.textContent = upgrade.icon;
+      icon.textContent = offer.icon;
       const category = document.createElement("small");
-      category.textContent = upgrade.category;
+      category.textContent = `${offer.rarity.toUpperCase()} · ${offer.category}`;
       const title = document.createElement("h3");
-      title.textContent = upgrade.name;
+      title.textContent = offer.name;
       const description = document.createElement("p");
-      description.textContent = upgrade.description;
-      card.append(icon, category, title, description);
-      card.addEventListener("click", () => eventBus.emit("ui:upgrade-selected", upgrade.id), { once: true });
+      description.textContent = offer.description;
+      const rank = document.createElement("span");
+      rank.className = "upgrade-rank";
+      rank.textContent =
+        offer.rank >= offer.maxRank ? "MAX RANK" : `RANK ${offer.rank} / ${offer.maxRank}`;
+      card.append(icon, category, title, description, rank);
+      card.addEventListener("click", () => eventBus.emit("ui:upgrade-selected", offer.id), {
+        once: true,
+      });
       container.appendChild(card);
     });
     this.screens.upgrade.classList.add("screen-visible");

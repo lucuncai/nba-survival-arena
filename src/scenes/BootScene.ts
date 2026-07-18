@@ -36,6 +36,7 @@ export class BootScene extends Phaser.Scene {
   }
 
   private generateCourt(): void {
+    if (this.textures.exists("court")) return;
     const canvas = document.createElement("canvas");
     canvas.width = WORLD.width;
     canvas.height = WORLD.height;

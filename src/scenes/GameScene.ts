@@ -240,7 +240,10 @@ export class GameScene extends Phaser.Scene {
   }
 
   private drawArena(): void {
-    this.add.image(WORLD.centerX, WORLD.centerY, "court").setDepth(0);
+    this.add
+      .image(WORLD.centerX, WORLD.centerY, "court")
+      .setDisplaySize(WORLD.width, WORLD.height)
+      .setDepth(0);
 
     const upperLight = this.add
       .image(WORLD.centerX - 510, WORLD.centerY - 300, "fx-glow")

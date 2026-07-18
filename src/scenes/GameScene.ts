@@ -4,10 +4,17 @@ import { saveStore } from "../core/SaveStore";
 import { SeededRandom } from "../core/SeededRandom";
 import { audio } from "../game/AudioSystem";
 import { COLORS, HOOP, PLAYER_BASE, VIEWPORT, WORLD } from "../game/config";
-import { UPGRADES, getEnemyDefinition } from "../game/data";
+import { UPGRADES, getCharacter, getEnemyDefinition } from "../game/data";
 import { EffectsSystem } from "../game/EffectsSystem";
 import { EnemyEntity, EnemyShot, PlayerEntity } from "../game/entities";
-import type { ActionName, HudSnapshot, RunResult, UpgradeId } from "../game/types";
+import type {
+  ActionName,
+  CharacterDefinition,
+  HudSnapshot,
+  RunResult,
+  SkillId,
+  UpgradeId,
+} from "../game/types";
 import { WaveDirector } from "../game/WaveDirector";
 
 interface ControlKeys {
@@ -27,6 +34,8 @@ type SkillName = "skill1" | "skill2" | "skill3" | "ultimate";
 
 export class GameScene extends Phaser.Scene {
   private player!: PlayerEntity;
+  private character!: CharacterDefinition;
+  private skillHandlers!: Record<SkillId, () => void>;
   private enemies!: Phaser.Physics.Arcade.Group;
   private shots: EnemyShot[] = [];
   private boss: EnemyEntity | null = null;
@@ -89,9 +98,17 @@ export class GameScene extends Phaser.Scene {
     this.cameras.main.centerOn(WORLD.centerX, WORLD.centerY);
     this.cameras.main.setBackgroundColor(COLORS.ink);
 
+    this.character = getCharacter(saveStore.load().profile.selectedCharacter);
+    this.skillHandlers = {
+      "chasedown-block": () => this.doChasedownBlock(),
+      "power-drive": () => this.doPowerDrive(),
+      "court-quake": () => this.doCourtQuake(),
+      "kings-court": () => this.doUltimate(),
+    };
+
     this.drawArena();
     this.createHoop();
-    this.player = new PlayerEntity(this, WORLD.centerX + 175, WORLD.centerY);
+    this.player = new PlayerEntity(this, WORLD.centerX + 175, WORLD.centerY, this.character);
     this.enemies = this.physics.add.group();
     this.effects = new EffectsSystem(this);
     this.random = new SeededRandom(Date.now());
@@ -433,16 +450,10 @@ export class GameScene extends Phaser.Scene {
         this.doAttack();
         break;
       case "skill1":
-        this.doChasedownBlock();
-        break;
       case "skill2":
-        this.doPowerDrive();
-        break;
       case "skill3":
-        this.doCourtQuake();
-        break;
       case "ultimate":
-        this.doUltimate();
+        this.skillHandlers[this.character.skills[action]]();
         break;
     }
   }

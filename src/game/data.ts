@@ -1,6 +1,10 @@
+import { COLORS, PLAYER_BASE } from "./config";
 import type {
+  CharacterDefinition,
+  CharacterId,
   EnemyDefinition,
   EnemyKind,
+  SkillId,
   UpgradeDefinition,
   UpgradeId,
   WaveDefinition,
@@ -215,6 +219,42 @@ export const UPGRADES: readonly UpgradeDefinition[] = [
   },
 ] as const;
 
+export const SKILL_IDS: readonly SkillId[] = [
+  "chasedown-block",
+  "power-drive",
+  "court-quake",
+  "kings-court",
+] as const;
+
+export const CHARACTERS: Readonly<Record<CharacterId, CharacterDefinition>> = {
+  king: {
+    id: "king",
+    name: "THE KING",
+    title: "PAINT GUARDIAN",
+    description: "Power through traffic and erase shots at the rim.",
+    jerseyNumber: "23",
+    textureKey: "hero-king",
+    color: COLORS.orange,
+    unlockCost: 0,
+    stats: {
+      maxHp: PLAYER_BASE.maxHp,
+      moveSpeed: PLAYER_BASE.speed,
+      damage: PLAYER_BASE.damage,
+      attackRange: PLAYER_BASE.attackRange,
+      attackArc: PLAYER_BASE.attackArc,
+      attackCooldown: PLAYER_BASE.attackCooldown,
+    },
+    skills: {
+      skill1: "chasedown-block",
+      skill2: "power-drive",
+      skill3: "court-quake",
+      ultimate: "kings-court",
+    },
+  },
+};
+
+export const DEFAULT_CHARACTER_ID: CharacterId = "king";
+
 export function getEnemyDefinition(kind: EnemyKind): EnemyDefinition {
   return ENEMIES[kind];
 }
@@ -223,4 +263,8 @@ export function getUpgrade(id: UpgradeId): UpgradeDefinition {
   const upgrade = UPGRADES.find((candidate) => candidate.id === id);
   if (!upgrade) throw new Error(`Unknown upgrade: ${id}`);
   return upgrade;
+}
+
+export function getCharacter(id: CharacterId): CharacterDefinition {
+  return CHARACTERS[id];
 }

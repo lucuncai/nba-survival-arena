@@ -15,6 +15,10 @@ export type UpgradeId =
   | "paint-beast"
   | "fast-break";
 
+export type CharacterId = "king";
+
+export type SkillId = "chasedown-block" | "power-drive" | "court-quake" | "kings-court";
+
 export interface CooldownSnapshot {
   remaining: number;
   total: number;
@@ -80,8 +84,45 @@ export interface WaveDefinition {
   boss?: EnemyKind;
 }
 
+export interface CharacterStats {
+  maxHp: number;
+  moveSpeed: number;
+  damage: number;
+  attackRange: number;
+  attackArc: number;
+  attackCooldown: number;
+}
+
+export interface CharacterSkillLoadout {
+  skill1: SkillId;
+  skill2: SkillId;
+  skill3: SkillId;
+  ultimate: SkillId;
+}
+
+export interface CharacterDefinition {
+  id: CharacterId;
+  name: string;
+  title: string;
+  description: string;
+  jerseyNumber: string;
+  textureKey: string;
+  color: number;
+  unlockCost: number;
+  stats: CharacterStats;
+  skills: CharacterSkillLoadout;
+}
+
+export interface MetaProfile {
+  streetCred: number;
+  selectedCharacter: CharacterId;
+  unlockedCharacters: CharacterId[];
+  unlockedArenas: string[];
+  permanentUpgrades: Record<string, number>;
+}
+
 export interface SaveData {
-  version: 2;
+  version: 3;
   gamesPlayed: number;
   bestScore: number;
   bestTime: number;
@@ -89,6 +130,7 @@ export interface SaveData {
   bestBlocks: number;
   tutorialSeen: boolean;
   muted: boolean;
+  profile: MetaProfile;
 }
 
 export interface GameEvents {

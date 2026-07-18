@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { COLORS, PLAYER_BASE } from "./config";
-import type { EnemyDefinition } from "./types";
+import type { CharacterDefinition, EnemyDefinition } from "./types";
 
 type EnemyState = "approach" | "windup" | "recover" | "stunned" | "dead";
 
@@ -25,11 +25,22 @@ export class PlayerEntity extends Phaser.Physics.Arcade.Sprite {
   aimAngle = 0;
   level = 1;
 
+  readonly characterId: CharacterDefinition["id"];
+
   private moveX = 0;
   private moveY = 0;
 
-  constructor(scene: Phaser.Scene, x: number, y: number) {
-    super(scene, x, y, "hero-king");
+  constructor(scene: Phaser.Scene, x: number, y: number, character: CharacterDefinition) {
+    super(scene, x, y, character.textureKey);
+    this.characterId = character.id;
+    this.maxHp = character.stats.maxHp;
+    this.hp = character.stats.maxHp;
+    this.moveSpeed = character.stats.moveSpeed;
+    this.damage = character.stats.damage;
+    this.attackRange = character.stats.attackRange;
+    this.attackArc = character.stats.attackArc;
+    this.attackCooldownTotal = character.stats.attackCooldown;
+
     scene.add.existing(this);
     scene.physics.add.existing(this);
     this.setDepth(25).setScale(0.82).setCollideWorldBounds(true);

@@ -810,6 +810,27 @@ button {
 #locker-screen,
 #select-screen {
   flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+}
+
+@media (max-height: 540px) {
+  .select-card img {
+    height: 104px;
+  }
+
+  .select-card p,
+  .upgrade-card {
+    min-height: 0;
+  }
+
+  .upgrade-card {
+    padding: 16px;
+  }
+
+  .upgrade-card .upgrade-icon {
+    margin-bottom: 14px;
+  }
 }
 
 .upgrade-heading {
